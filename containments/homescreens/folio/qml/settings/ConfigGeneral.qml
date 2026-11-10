@@ -196,11 +196,42 @@ SimpleKCM {
 
         FormCard.FormCard {
             FormCard.FormSwitchDelegate {
+                id: favouritesBarBackgroundSwitch
                 text: i18n("Show background")
                 checked: folio.FolioSettings.showFavouritesBarBackground
                 onCheckedChanged: {
                     if (checked !== folio.FolioSettings.showFavouritesBarBackground) {
                         folio.FolioSettings.showFavouritesBarBackground = checked;
+                    }
+                }
+            }
+
+            FormCard.FormDelegateSeparator { above: favouritesBarBackgroundSwitch; below: favouritesBarFitToIcons }
+
+            FormCard.FormSwitchDelegate {
+                id: favouritesBarFitToIcons
+                text: i18n("Fit to icons")
+                description: i18n("Size the bar to its icons instead of a fixed height")
+                checked: folio.FolioSettings.favouritesBarFitToIcons
+                onCheckedChanged: {
+                    if (checked !== folio.FolioSettings.favouritesBarFitToIcons) {
+                        folio.FolioSettings.favouritesBarFitToIcons = checked;
+                    }
+                }
+            }
+
+            FormCard.FormDelegateSeparator { above: favouritesBarFitToIcons; below: favouritesBarPadding; visible: favouritesBarPadding.visible }
+
+            FormCard.FormSpinBoxDelegate {
+                id: favouritesBarPadding
+                visible: folio.FolioSettings.favouritesBarFitToIcons
+                label: i18n("Padding around icons")
+                from: 0
+                to: 64
+                value: folio.FolioSettings.favouritesBarPadding
+                onValueChanged: {
+                    if (value !== folio.FolioSettings.favouritesBarPadding) {
+                        folio.FolioSettings.favouritesBarPadding = value;
                     }
                 }
             }

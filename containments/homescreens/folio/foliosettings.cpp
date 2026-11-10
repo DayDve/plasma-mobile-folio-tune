@@ -6,6 +6,7 @@
 #include "pagelistmodel.h"
 
 #include <QFile>
+#include <algorithm>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QTextStream>
@@ -25,6 +26,8 @@ const QString CFG_KEY_SHOW_FAVORITES_APPLABELS = QStringLiteral("showFavoritesAp
 const QString CFG_KEY_LOCK_LAYOUT = QStringLiteral("lockLayout");
 const QString CFG_KEY_DELEGATE_ICON_SIZE = QStringLiteral("delegateIconSize");
 const QString CFG_KEY_SHOW_FAVORITES_BAR_BACKGROUND = QStringLiteral("showFavoritesBarBackground");
+const QString CFG_KEY_FAVORITES_BAR_FIT_TO_ICONS = QStringLiteral("favoritesBarFitToIcons");
+const QString CFG_KEY_FAVORITES_BAR_PADDING = QStringLiteral("favoritesBarPadding");
 const QString CFG_KEY_PAGE_TRANSITION_EFFECT = QStringLiteral("pageTransitionEffect");
 const QString CFG_KEY_SHOW_WALLPAPER_BLUR = QStringLiteral("wallpaperBlurEffect");
 const QString CFG_KEY_DOUBLE_TAP_TO_LOCK = QStringLiteral("doubleTapToLock");
@@ -158,6 +161,35 @@ void FolioSettings::setShowFavouritesBarBackground(bool showFavouritesBarBackgro
     }
 }
 
+bool FolioSettings::favouritesBarFitToIcons() const
+{
+    return m_favouritesBarFitToIcons;
+}
+
+void FolioSettings::setFavouritesBarFitToIcons(bool favouritesBarFitToIcons)
+{
+    if (m_favouritesBarFitToIcons != favouritesBarFitToIcons) {
+        m_favouritesBarFitToIcons = favouritesBarFitToIcons;
+        Q_EMIT favouritesBarFitToIconsChanged();
+        save();
+    }
+}
+
+int FolioSettings::favouritesBarPadding() const
+{
+    return m_favouritesBarPadding;
+}
+
+void FolioSettings::setFavouritesBarPadding(int favouritesBarPadding)
+{
+    favouritesBarPadding = std::max(0, favouritesBarPadding);
+    if (m_favouritesBarPadding != favouritesBarPadding) {
+        m_favouritesBarPadding = favouritesBarPadding;
+        Q_EMIT favouritesBarPaddingChanged();
+        save();
+    }
+}
+
 FolioSettings::PageTransitionEffect FolioSettings::pageTransitionEffect() const
 {
     return m_pageTransitionEffect;
@@ -215,6 +247,8 @@ void FolioSettings::save()
     generalGroup.writeEntry(CFG_KEY_LOCK_LAYOUT, m_lockLayout);
     generalGroup.writeEntry(CFG_KEY_DELEGATE_ICON_SIZE, m_delegateIconSize);
     generalGroup.writeEntry(CFG_KEY_SHOW_FAVORITES_BAR_BACKGROUND, m_showFavouritesBarBackground);
+    generalGroup.writeEntry(CFG_KEY_FAVORITES_BAR_FIT_TO_ICONS, m_favouritesBarFitToIcons);
+    generalGroup.writeEntry(CFG_KEY_FAVORITES_BAR_PADDING, m_favouritesBarPadding);
     generalGroup.writeEntry(CFG_KEY_PAGE_TRANSITION_EFFECT, (int)m_pageTransitionEffect);
     generalGroup.writeEntry(CFG_KEY_SHOW_WALLPAPER_BLUR, (int)m_wallpaperBlurEffect);
     generalGroup.writeEntry(CFG_KEY_DOUBLE_TAP_TO_LOCK, m_doubleTapToLock);
@@ -239,6 +273,8 @@ void FolioSettings::load()
     m_lockLayout = generalGroup.readEntry(CFG_KEY_LOCK_LAYOUT, false);
     m_delegateIconSize = generalGroup.readEntry(CFG_KEY_DELEGATE_ICON_SIZE, 48);
     m_showFavouritesBarBackground = generalGroup.readEntry(CFG_KEY_SHOW_FAVORITES_BAR_BACKGROUND, true);
+    m_favouritesBarFitToIcons = generalGroup.readEntry(CFG_KEY_FAVORITES_BAR_FIT_TO_ICONS, false);
+    m_favouritesBarPadding = std::max(0, generalGroup.readEntry(CFG_KEY_FAVORITES_BAR_PADDING, 12));
     m_pageTransitionEffect = static_cast<PageTransitionEffect>(generalGroup.readEntry(CFG_KEY_PAGE_TRANSITION_EFFECT, (int)SlideTransition));
     m_wallpaperBlurEffect = static_cast<WallpaperBlurEffect>(generalGroup.readEntry(CFG_KEY_SHOW_WALLPAPER_BLUR, (int)Full));
     m_doubleTapToLock = generalGroup.readEntry(CFG_KEY_DOUBLE_TAP_TO_LOCK, true);
@@ -250,6 +286,8 @@ void FolioSettings::load()
     Q_EMIT lockLayoutChanged();
     Q_EMIT delegateIconSizeChanged();
     Q_EMIT showFavouritesBarBackgroundChanged();
+    Q_EMIT favouritesBarFitToIconsChanged();
+    Q_EMIT favouritesBarPaddingChanged();
     Q_EMIT pageTransitionEffectChanged();
     Q_EMIT wallpaperBlurEffectChanged();
     Q_EMIT doubleTapToLockChanged();

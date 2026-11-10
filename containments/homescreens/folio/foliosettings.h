@@ -24,6 +24,8 @@ class FolioSettings : public QObject
     Q_PROPERTY(bool lockLayout READ lockLayout WRITE setLockLayout NOTIFY lockLayoutChanged)
     Q_PROPERTY(int delegateIconSize READ delegateIconSize WRITE setDelegateIconSize NOTIFY delegateIconSizeChanged)
     Q_PROPERTY(bool showFavouritesBarBackground READ showFavouritesBarBackground WRITE setShowFavouritesBarBackground NOTIFY showFavouritesBarBackgroundChanged)
+    Q_PROPERTY(bool favouritesBarFitToIcons READ favouritesBarFitToIcons WRITE setFavouritesBarFitToIcons NOTIFY favouritesBarFitToIconsChanged)
+    Q_PROPERTY(int favouritesBarPadding READ favouritesBarPadding WRITE setFavouritesBarPadding NOTIFY favouritesBarPaddingChanged)
     Q_PROPERTY(
         FolioSettings::PageTransitionEffect pageTransitionEffect READ pageTransitionEffect WRITE setPageTransitionEffect NOTIFY pageTransitionEffectChanged)
     Q_PROPERTY(FolioSettings::WallpaperBlurEffect wallpaperBlurEffect READ wallpaperBlurEffect WRITE setWallpaperBlurEffect NOTIFY wallpaperBlurEffectChanged)
@@ -81,6 +83,14 @@ public:
     bool showFavouritesBarBackground() const;
     void setShowFavouritesBarBackground(bool showFavouritesBarBackground);
 
+    // size the favourites bar to its icons (plus padding) instead of a fixed thickness
+    bool favouritesBarFitToIcons() const;
+    void setFavouritesBarFitToIcons(bool favouritesBarFitToIcons);
+
+    // padding on each side of the icons when favouritesBarFitToIcons is enabled
+    int favouritesBarPadding() const;
+    void setFavouritesBarPadding(int favouritesBarPadding);
+
     PageTransitionEffect pageTransitionEffect() const;
     void setPageTransitionEffect(PageTransitionEffect pageTransitionEffect);
 
@@ -103,6 +113,8 @@ Q_SIGNALS:
     void lockLayoutChanged();
     void delegateIconSizeChanged();
     void showFavouritesBarBackgroundChanged();
+    void favouritesBarFitToIconsChanged();
+    void favouritesBarPaddingChanged();
     void pageTransitionEffectChanged();
     void wallpaperBlurEffectChanged();
     void doubleTapToLockChanged();
@@ -123,6 +135,8 @@ private:
     bool m_lockLayout{false};
     qreal m_delegateIconSize{48};
     bool m_showFavouritesBarBackground{false};
+    bool m_favouritesBarFitToIcons{false};
+    int m_favouritesBarPadding{12};
     PageTransitionEffect m_pageTransitionEffect{SlideTransition};
     WallpaperBlurEffect m_wallpaperBlurEffect{Full};
     bool m_doubleTapToLock{false};

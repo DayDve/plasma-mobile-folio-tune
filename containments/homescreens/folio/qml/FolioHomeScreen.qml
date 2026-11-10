@@ -346,6 +346,11 @@ Item {
                     visible: opacity > 0
 
                     // one is ignored as anchors are set
+                    // thickness of the bar: fixed, or fitted to the icons (and labels, if shown) plus padding
+                    readonly property real barThickness: folio.FolioSettings.favouritesBarFitToIcons
+                        ? folio.FolioSettings.delegateIconSize + folio.FolioSettings.favouritesBarPadding * 2
+                          + (folio.FolioSettings.showFavouritesAppLabels ? folio.HomeScreenState.pageDelegateLabelHeight + folio.HomeScreenState.pageDelegateLabelSpacing : 0)
+                        : Kirigami.Units.gridUnit * 6
                     height: Kirigami.Units.gridUnit * 6
                     width: Kirigami.Units.gridUnit * 6
 
@@ -403,7 +408,7 @@ Item {
                             }
                             PropertyChanges {
                                 target: favouritesBar
-                                height: Kirigami.Units.gridUnit * 6
+                                height: favouritesBar.barThickness
                             }
                         }, State {
                             name: "left"
@@ -417,7 +422,7 @@ Item {
                             }
                             PropertyChanges {
                                 target: favouritesBar
-                                width: Kirigami.Units.gridUnit * 6
+                                width: favouritesBar.barThickness
                             }
                         }, State {
                             name: "right"
@@ -431,7 +436,7 @@ Item {
                             }
                             PropertyChanges {
                                 target: favouritesBar
-                                width: Kirigami.Units.gridUnit * 6
+                                width: favouritesBar.barThickness
                             }
                         }
                     ]

@@ -117,7 +117,8 @@ Folio.DelegateTouchArea {
             MobileShell.BaseItem {
                 id: visualItem
 
-                Layout.alignment: Qt.AlignHCenter | Qt.AlignBottom
+                // without a label (e.g. favourites bar with labels hidden) centre the icon
+                Layout.alignment: label.visible ? (Qt.AlignHCenter | Qt.AlignBottom) : Qt.AlignCenter
                 Layout.minimumWidth: folio.FolioSettings.delegateIconSize
                 Layout.minimumHeight: folio.FolioSettings.delegateIconSize
                 Layout.preferredHeight: Layout.minimumHeight
@@ -135,6 +136,8 @@ Folio.DelegateTouchArea {
             DelegateLabel {
                 id: label
                 opacity: text.length > 0
+                // don't reserve space for an empty label
+                visible: text.length > 0
 
                 Layout.fillWidth: true
                 Layout.preferredHeight: folio.HomeScreenState.pageDelegateLabelHeight
