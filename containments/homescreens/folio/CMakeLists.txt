@@ -32,6 +32,7 @@ plasma_add_applet(org.kde.plasma.mobile.homescreen.folio
         foliowidget.cpp
         homescreen.cpp
         homescreenstate.cpp
+        launcherentry.cpp
         pagelistmodel.cpp
         pagemodel.cpp
         widgetcontainer.cpp
@@ -87,4 +88,5 @@ target_link_libraries(org.kde.plasma.mobile.homescreen.folio PRIVATE
     Plasma::KWaylandClient
     KF6::WindowSystem
     KF6::JobWidgets
+    Qt::DBus
 )

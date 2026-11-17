@@ -18,6 +18,7 @@ import org.kde.plasma.private.mobileshell.windowplugin as WindowPlugin
 import org.kde.plasma.private.mobileshell.shellsettingsplugin as ShellSettings
 
 import plasma.applet.org.kde.plasma.mobile.homescreen.folio as Folio
+import org.kde.notificationmanager as NotificationManager
 
 import "./private"
 
@@ -29,7 +30,41 @@ ContainmentItem {
         folio.FolioSettings.load();
         folio.FavouritesModel.load();
         folio.PageListModel.load();
+        badgeTimer.start();
     }
+
+    // Badges on the app icons: notifications in the shade per application, for apps that do
+    // not publish their own count (com.canonical.Unity.LauncherEntry, see launcherentry.h).
+    // One model for the whole home screen; recounted shortly after any change.
+    property NotificationManager.Notifications badgeNotifications: NotificationManager.Notifications {
+        showExpired: true
+        showDismissed: true
+        showJobs: false
+        groupMode: NotificationManager.Notifications.GroupDisabled
+        onCountChanged: badgeTimer.restart()
+        onDataChanged: badgeTimer.restart()
+    }
+    property Folio.LauncherNotificationCounts badgeCounts: Folio.LauncherNotificationCounts {}
+    property Timer badgeTimer: Timer {
+        interval: 300
+        onTriggered: {
+            const m = root.badgeNotifications;
+            const counts = {};
+            for (let i = 0; i < m.count; ++i) {
+                const idx = m.index(i, 0);
+                if (m.data(idx, NotificationManager.Notifications.TypeRole) !== NotificationManager.Notifications.NotificationType
+                        || m.data(idx, NotificationManager.Notifications.ResidentRole)) {
+                    continue; // jobs; "running in the background" and the like
+                }
+                const entry = m.data(idx, NotificationManager.Notifications.DesktopEntryRole);
+                if (entry) {
+                    counts[entry] = (counts[entry] || 0) + 1;
+                }
+            }
+            root.badgeCounts.update(counts);
+        }
+    }
+    Component.onDestruction: badgeTimer.stop()
 
     property MobileShell.MaskManager maskManager: MobileShell.MaskManager {
         height: root.height
