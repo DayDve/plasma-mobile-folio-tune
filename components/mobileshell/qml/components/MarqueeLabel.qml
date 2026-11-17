@@ -91,7 +91,9 @@ OpacityMask {
     // if the label is overflowing, this animation in a loop smoothly scrolling thought the text
     SequentialAnimation {
         id: textAnimationLoop
-        running: root.charactersOverflowing && root.visible
+        // Only while the label is on screen: in a hidden window (the closed action drawer)
+        // the animation is still driven by a timer and keeps the shell busy all the time.
+        running: root.charactersOverflowing && root.visible && root.Window.window !== null && root.Window.window.visible
         onRunningChanged: row.scrollPosition = 0
         loops: Animation.Infinite
         PauseAnimation { duration: root.waitDuration }
