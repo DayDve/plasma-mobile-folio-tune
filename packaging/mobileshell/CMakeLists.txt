@@ -1,0 +1,27 @@
+# The org.kde.plasma.private.mobileshell module from these sources (same version as the system's)
+# with our fixes. Installed into ~/.local/lib/qt6/qml ahead of the system one (QML_IMPORT_PATH).
+cmake_minimum_required(VERSION 3.24)
+project(mobileshell-tune LANGUAGES CXX)
+
+set(QT_MAJOR_VERSION 6)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+find_package(ECM REQUIRED NO_MODULE)
+set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
+include(KDEInstallDirs)
+include(KDECMakeSettings)
+include(KDECompilerSettings NO_POLICY_SCOPE)
+include(ECMQmlModule)
+add_definitions(-DQT_NO_URL_CAST_FROM_STRING)
+set(QT_QML_GENERATE_QMLLS_INI OFF)
+
+find_package(Qt6 REQUIRED COMPONENTS Core Qml Quick Gui DBus WaylandClient)
+if(Qt6WaylandClient_VERSION VERSION_GREATER_EQUAL "6.10.0")
+    find_package(Qt6 REQUIRED COMPONENTS WaylandClientPrivate)
+endif()
+find_package(KF6 REQUIRED COMPONENTS I18n KIO Config ItemModels Service Notifications Package)
+find_package(Plasma CONFIG REQUIRED)
+find_package(PlasmaQuick CONFIG REQUIRED)
+find_package(LayerShellQt REQUIRED)
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../components/mobileshell mobileshell)
