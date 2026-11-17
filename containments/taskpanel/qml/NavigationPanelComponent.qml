@@ -42,7 +42,8 @@ MobileShell.NavigationPanel {
     edgeAction: MobileShell.NavigationPanelAction {
         id: hidePanelAction
         enabled: true
-        iconSource: root.isVertical ? "go-next-symbolic" : "go-down-symbolic"
+        // not go-down: that one closes the keyboard
+        iconSource: root.isVertical ? "go-last-symbolic" : "go-bottom-symbolic"
         shrinkSize: 4
 
         onTriggered: root.hideRequested()

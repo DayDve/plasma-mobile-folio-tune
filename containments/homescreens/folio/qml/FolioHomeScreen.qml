@@ -354,10 +354,14 @@ Item {
                     height: Kirigami.Units.gridUnit * 6
                     width: Kirigami.Units.gridUnit * 6
 
+                    // The navigation panel hidden with its button leaves only a thin strip
+                    // for the swipe that brings it back. Let the bar take the panel's place
+                    // then: the strip covers the bar's own padding, not the icons.
+                    readonly property real edgeStripMax: Kirigami.Units.gridUnit + 1
                     anchors.topMargin: root.topMargin
-                    anchors.bottomMargin: root.bottomMargin
+                    anchors.bottomMargin: root.bottomMargin <= edgeStripMax ? 0 : root.bottomMargin
                     anchors.leftMargin: root.leftMargin
-                    anchors.rightMargin: root.rightMargin
+                    anchors.rightMargin: root.rightMargin <= edgeStripMax ? 0 : root.rightMargin
 
                     // Keyboard navigation on favorites bar
                     Keys.onPressed: (event) => {
