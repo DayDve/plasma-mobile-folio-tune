@@ -16,7 +16,7 @@ include(ECMQmlModule)
 set(QT_QML_GENERATE_QMLLS_INI OFF)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui DBus Qml Quick Sensors)
-find_package(KF6 REQUIRED COMPONENTS I18n)
+find_package(KF6 REQUIRED COMPONENTS I18n KIO Config CoreAddons Service Package WindowSystem)
 find_package(KF6Screen REQUIRED)
 find_package(Plasma CONFIG REQUIRED)
 
