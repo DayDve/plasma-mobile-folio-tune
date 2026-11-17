@@ -29,6 +29,10 @@ Item {
     property NavigationPanelAction leftCornerAction
     property NavigationPanelAction rightCornerAction
 
+    // Optional button at the very end of the panel (right, or top when vertical),
+    // past the right corner button.
+    property NavigationPanelAction edgeAction
+
     property real leftPadding: 0
     property real rightPadding: 0
 
@@ -120,6 +124,21 @@ Item {
         }
 
         NavigationPanelButton {
+            id: edgeButton
+            visible: root.edgeAction ? root.edgeAction.visible : false
+            Kirigami.Theme.colorSet: root.foregroundColorGroup
+            Kirigami.Theme.inherit: false
+            enabled: root.edgeAction ? root.edgeAction.enabled : false
+            shrinkSize: root.edgeAction ? root.edgeAction.shrinkSize : 0
+            iconSource: root.edgeAction ? root.edgeAction.iconSource : ""
+            onClicked: {
+                if (enabled) {
+                    root.edgeAction.triggered();
+                }
+            }
+        }
+
+        NavigationPanelButton {
             id: rightCornerButton
             visible: root.rightCornerAction.visible
             Kirigami.Theme.colorSet: root.foregroundColorGroup
@@ -177,10 +196,22 @@ Item {
                 width: icons.width
             }
             AnchorChanges {
-                target: rightCornerButton
+                target: edgeButton
                 anchors {
                     horizontalCenter: parent.horizontalCenter
                     top: parent.top
+                }
+            }
+            PropertyChanges {
+                target: edgeButton
+                height: Kirigami.Units.gridUnit * 2
+                width: icons.width
+            }
+            AnchorChanges {
+                target: rightCornerButton
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                    top: edgeButton.visible ? edgeButton.bottom : parent.top
                 }
             }
             PropertyChanges {
@@ -241,10 +272,22 @@ Item {
                 width: icons.buttonLength
             }
             AnchorChanges {
-                target: rightCornerButton
+                target: edgeButton
                 anchors {
                     verticalCenter: parent.verticalCenter
                     right: parent.right
+                }
+            }
+            PropertyChanges {
+                target: edgeButton
+                height: parent.height
+                width: Kirigami.Units.gridUnit * 2
+            }
+            AnchorChanges {
+                target: rightCornerButton
+                anchors {
+                    verticalCenter: parent.verticalCenter
+                    right: edgeButton.visible ? edgeButton.left : parent.right
                 }
             }
             PropertyChanges {

@@ -36,6 +36,21 @@ ContainmentItem {
         id: haptics
     }
 
+    // Hidden with the button on the panel itself, until a swipe from the screen
+    // edge brings it back. Unlike the shared panelState, this leaves the status
+    // bar alone. While hidden the panel reserves no space, so windows take the
+    // whole screen.
+    property bool manuallyHidden: false
+    onManuallyHiddenChanged: setWindowProperties()
+
+    // Bring the panel back after a swipe or a tap on the edge strip
+    function revealPanel() {
+        root.manuallyHidden = false;
+        if (MobileShellState.ShellDBusClient.panelState == "hidden") {
+            MobileShellState.ShellDBusClient.panelState = "visible";
+        }
+    }
+
     readonly property bool inLandscape: MobileShell.Constants.navigationPanelOnSide(Screen.width, Screen.height)
 
     readonly property real navigationPanelHeight: MobileShell.Constants.navigationPanelThickness
@@ -86,7 +101,7 @@ ContainmentItem {
             root.panel.offset = intendedWindowOffset;
             root.panel.thickness = navigationPanelHeight;
             root.panel.location = intendedWindowLocation;
-            root.panel.visibilityMode = ShellSettings.Settings.autoHidePanelsEnabled ? 3 : 0;
+            root.panel.visibilityMode = (ShellSettings.Settings.autoHidePanelsEnabled || root.manuallyHidden) ? 3 : 0;
             MobileShell.ShellUtil.setWindowLayer(root.panel, LayerShell.Window.LayerOverlay);
             root.updateTouchArea();
         }
@@ -185,6 +200,11 @@ ContainmentItem {
                 opaqueBar: root.opaqueBar
                 forcedComplementary: !opaqueBar && !startupFeedbackColorAnimation.isShowing
 
+                onHideRequested: {
+                    haptics.buttonVibrate();
+                    root.manuallyHidden = true;
+                }
+
                 transform: [
                     Translate {
                         y: inLandscape ? 0 : navigationPanel.offset
@@ -218,7 +238,7 @@ ContainmentItem {
             sourceComponent: ShellSettings.Settings.navigationPanelEnabled ? navigationPanelComponent : gesturePanelComponent
         }
 
-        state: MobileShellState.ShellDBusClient.panelState
+        state: root.manuallyHidden ? "hidden" : MobileShellState.ShellDBusClient.panelState
         onStateChanged: {
             if (navigationPanel.state != "hidden") {
                 root.setWindowProperties();
@@ -285,7 +305,7 @@ ContainmentItem {
                 swipeArea.resetSwipe();
                 resetAn.restart();
                 haptics.buttonVibrate();
-                MobileShellState.ShellDBusClient.panelState = "visible";
+                root.revealPanel();
             }
         }
 
@@ -296,7 +316,7 @@ ContainmentItem {
         onPressedChanged: {
             if (!pressed && dragEffect.offsetPoint == 0) {
                 haptics.buttonVibrate();
-                MobileShellState.ShellDBusClient.panelState = "visible";
+                root.revealPanel();
             }
         }
 

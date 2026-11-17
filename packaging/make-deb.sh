@@ -6,8 +6,11 @@
 #   - the Folio Tune homescreen plugin (its own ID, next to the stock Folio);
 #   - the org.kde.plasma.private.mobileshell QML module with our fixes, in
 #     /usr/lib/plasma-mobile-folio-tune/qml, put ahead of the system one by
-#     QML_IMPORT_PATH from /etc/xdg/plasma-workspace/env.
-# The mobileshell module must match the installed plasma-mobile exactly, so the
+#     QML_IMPORT_PATH from /etc/xdg/plasma-workspace/env;
+#   - the navigation panel containment (org.kde.plasma.mobile.taskpanel) with a
+#     button that hides the panel, in /usr/lib/plasma-mobile-folio-tune/plugins,
+#     put ahead of the system one by QT_PLUGIN_PATH from the same file.
+# Both override parts of plasma-mobile and must match it exactly, so the
 # package depends on that upstream version.
 set -eu
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
@@ -47,10 +50,22 @@ QML=/usr/lib/$NAME/qml
 mkdir -p "$PKG$QML/org/kde/plasma/private/mobileshell"
 find "$SRCDIR" -maxdepth 1 -type f -exec cp {} "$PKG$QML/org/kde/plasma/private/mobileshell/" \;
 
+# navigation panel containment
+cmake -Wno-dev -S "$ROOT/packaging/taskpanel" -B "$BUILD/taskpanel" \
+    -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr >/dev/null
+cmake --build "$BUILD/taskpanel" -j"$(nproc)"
+DESTDIR=$BUILD/taskpanel-stage cmake --install "$BUILD/taskpanel" >/dev/null
+TP=$(find "$BUILD/taskpanel-stage" -name 'org.kde.plasma.mobile.taskpanel.so' | head -1)
+[ -n "$TP" ] || { echo "the taskpanel containment was not built"; exit 1; }
+PLUG=/usr/lib/$NAME/plugins
+install -Dm644 "$TP" "$PKG$PLUG/plasma/applets/org.kde.plasma.mobile.taskpanel.so"
+
 mkdir -p "$PKG/etc/xdg/plasma-workspace/env"
 cat > "$PKG/etc/xdg/plasma-workspace/env/$NAME.sh" <<EOF
-# $NAME: the mobileshell QML module with fixes, ahead of the system one
+# $NAME: the mobileshell QML module and the navigation panel with fixes,
+# ahead of the system ones
 export QML_IMPORT_PATH=$QML\${QML_IMPORT_PATH:+:\$QML_IMPORT_PATH}
+export QT_PLUGIN_PATH=$PLUG\${QT_PLUGIN_PATH:+:\$QT_PLUGIN_PATH}
 EOF
 
 # Only the files of this package: drop anything else cmake --install brought along
@@ -74,9 +89,11 @@ Description: Folio Tune homescreen and Plasma Mobile shell fixes
  Folio Tune is the Folio homescreen under its own plugin ID with a compact
  favourites bar and launcher badges. Choose it in the homescreen settings.
  .
- Also ships the mobileshell QML module of plasma-mobile $UPSTREAM with fixes
- (the action drawer marquee no longer animates while hidden), loaded ahead of
- the system one through QML_IMPORT_PATH. Log out and back in after installing.
+ Also ships the mobileshell QML module and the navigation panel of
+ plasma-mobile $UPSTREAM with changes, loaded ahead of the system ones through
+ QML_IMPORT_PATH and QT_PLUGIN_PATH: the action drawer marquee no longer
+ animates while hidden, and a button on the navigation panel hides it until a
+ swipe from the screen edge. Log out and back in after installing.
 EOF
 echo /etc/xdg/plasma-workspace/env/$NAME.sh > "$PKG/DEBIAN/conffiles"
 

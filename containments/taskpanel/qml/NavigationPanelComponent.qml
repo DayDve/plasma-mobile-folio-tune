@@ -35,6 +35,19 @@ MobileShell.NavigationPanel {
     foregroundColorGroup: forcedComplementary ? Kirigami.Theme.Complementary : Kirigami.Theme.Window
     shadow: forcedComplementary
 
+    // The user asked to slide the panel away (see main.qml: manuallyHidden)
+    signal hideRequested()
+
+    // hide the panel; a swipe from the screen edge brings it back
+    edgeAction: MobileShell.NavigationPanelAction {
+        id: hidePanelAction
+        enabled: true
+        iconSource: root.isVertical ? "go-next-symbolic" : "go-down-symbolic"
+        shrinkSize: 4
+
+        onTriggered: root.hideRequested()
+    }
+
     MobileShellState.PanelSettingsDBusClient {
         id: panelSettings
         screenName: Screen.name
