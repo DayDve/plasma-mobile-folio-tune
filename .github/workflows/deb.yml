@@ -1,0 +1,42 @@
+name: deb
+
+on:
+  push:
+    branches: [mobile]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deb
+  cancel-in-progress: true
+
+jobs:
+  deb:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Version
+        id: v
+        run: |
+          upstream=$(sed -n 's/^set(PROJECT_VERSION "\(.*\)")/\1/p' CMakeLists.txt)
+          echo "version=$upstream+mobile.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          echo "tag=v$upstream-mobile.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build image
+        run: docker build --pull -t build packaging
+
+      - name: Build package
+        run: |
+          docker run --rm -u "$(id -u):$(id -g)" -v "$PWD:/src" -w /src build \
+            packaging/make-deb.sh "${{ steps.v.outputs.version }}"
+
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.v.outputs.tag }}" packaging/out/*.deb \
+            --target "${{ github.sha }}" --title "${{ steps.v.outputs.tag }}" \
+            --notes "Built from ${{ github.sha }} for Debian forky arm64 (Mobian)."
