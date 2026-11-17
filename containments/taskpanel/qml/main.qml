@@ -41,7 +41,19 @@ ContainmentItem {
     // bar alone. While hidden the panel reserves no space, so windows take the
     // whole screen.
     property bool manuallyHidden: false
-    onManuallyHiddenChanged: setWindowProperties()
+    onManuallyHiddenChanged: {
+        // Showing: grow the window back before the panel slides in. Hiding: the
+        // window shrinks once the slide-out animation is done (see transitions).
+        if (!manuallyHidden) {
+            setWindowProperties();
+        }
+    }
+
+    // While hidden by the button the window shrinks to the strip that takes the
+    // swipe, so the home screen (available screen rect) gets the space back too.
+    readonly property real hiddenStripThickness: Kirigami.Units.gridUnit
+    readonly property bool shrunk: manuallyHidden && navigationPanel.state == "hidden" && !hideAnimationRunning
+    property bool hideAnimationRunning: false
 
     // Bring the panel back after a swipe or a tap on the edge strip
     function revealPanel() {
@@ -56,7 +68,7 @@ ContainmentItem {
     readonly property real navigationPanelHeight: MobileShell.Constants.navigationPanelThickness
     onNavigationPanelHeightChanged: setWindowProperties()
 
-    readonly property real intendedWindowThickness: navigationPanelHeight
+    readonly property real intendedWindowThickness: shrunk ? hiddenStripThickness : navigationPanelHeight
     readonly property real intendedWindowLength: inLandscape ? Screen.height : Screen.width
     readonly property real intendedWindowOffset: inLandscape ? MobileShell.Constants.topPanelHeight : 0; // offset for top panel
     readonly property int intendedWindowLocation: inLandscape ? PlasmaCore.Types.RightEdge : PlasmaCore.Types.BottomEdge
@@ -99,7 +111,7 @@ ContainmentItem {
             root.panel.floating = false;
             root.panel.maximize(); // maximize first, then we can apply offsets (otherwise they are overridden)
             root.panel.offset = intendedWindowOffset;
-            root.panel.thickness = navigationPanelHeight;
+            root.panel.thickness = root.intendedWindowThickness;
             root.panel.location = intendedWindowLocation;
             root.panel.visibilityMode = (ShellSettings.Settings.autoHidePanelsEnabled || root.manuallyHidden) ? 3 : 0;
             MobileShell.ShellUtil.setWindowLayer(root.panel, LayerShell.Window.LayerOverlay);
@@ -111,7 +123,8 @@ ContainmentItem {
     function updateTouchArea() {
         const hiddenTouchAreaThickness = Kirigami.Units.gridUnit;
 
-        if (navigationPanel.state == "hidden") {
+        // shrunk to the strip: the whole window takes input (the else branch)
+        if (navigationPanel.state == "hidden" && !root.shrunk) {
             if (inLandscape) {
                 MobileShell.ShellUtil.setInputRegion(root.panel, Qt.rect(root.panel.width - hiddenTouchAreaThickness, 0, hiddenTouchAreaThickness, root.panel.height));
             } else {
@@ -183,7 +196,7 @@ ContainmentItem {
         screen: Plasmoid.screen
         maximizedTracker: windowMaximizedTracker
 
-        visible: !root.fullscreen
+        visible: !root.fullscreen && !root.manuallyHidden
     }
 
     Item {
@@ -268,6 +281,9 @@ ContainmentItem {
 
         transitions: Transition {
             SequentialAnimation {
+                ScriptAction {
+                    script: root.hideAnimationRunning = true
+                }
                 ParallelAnimation {
                     PropertyAnimation {
                         properties: "offset"
@@ -277,6 +293,7 @@ ContainmentItem {
                 }
                 ScriptAction {
                     script: {
+                        root.hideAnimationRunning = false;
                         root.setWindowProperties();
                     }
                 }
