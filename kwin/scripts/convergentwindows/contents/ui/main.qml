@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
 import QtQuick
+import org.kde.kirigami as Kirigami
 import org.kde.kwin as KWinComponents
 import org.kde.plasma.private.mobileshell.shellsettingsplugin as ShellSettings
 
@@ -14,6 +15,174 @@ Loader {
     // Share of the screen height a floating window takes; what is below it stays visible.
     readonly property real floatingHeightRatio: 0.55
     readonly property int floatingMargin: 8
+    readonly property int floatingMinWidth: 160
+    readonly property int floatingMinHeight: 120
+
+    // The active floating window: it gets the handles below.
+    readonly property var floatingWindow: {
+        const window = KWinComponents.Workspace.activeWindow;
+        if (!window || !window.normalWindow || !window.keepAbove || window.fullScreen || window.minimized
+                || ShellSettings.Settings.convergenceModeEnabled) {
+            return null;
+        }
+        return window;
+    }
+
+    // Where the handles sit. It does not follow the window during a drag: touch points
+    // are mapped through the handle's position, which must not change under the finger.
+    property var handleFrame: Qt.rect(0, 0, 0, 0)
+    property int handleTitleHeight: 0
+    property var dragStart: null
+    property var pendingGeometry: null
+
+    Binding {
+        target: root
+        property: "handleFrame"
+        when: root.floatingWindow !== null && root.dragStart === null
+        value: root.floatingWindow ? root.floatingWindow.frameGeometry : Qt.rect(0, 0, 0, 0)
+        restoreMode: Binding.RestoreNone
+    }
+
+    Binding {
+        target: root
+        property: "handleTitleHeight"
+        when: root.floatingWindow !== null && root.dragStart === null
+        value: root.floatingWindow ? root.floatingWindow.clientGeometry.y - root.floatingWindow.frameGeometry.y : 0
+        restoreMode: Binding.RestoreNone
+    }
+
+    function floatingArea(window) {
+        return KWinComponents.Workspace.clientArea(KWinComponents.Workspace.MaximizeArea, window.output, window.desktops[0]);
+    }
+
+    function beginDrag() {
+        const g = floatingWindow.frameGeometry;
+        dragStart = Qt.rect(g.x, g.y, g.width, g.height);
+    }
+
+    function dragTo(dx, dy, resize) {
+        const window = floatingWindow;
+        if (!window || !dragStart) {
+            return;
+        }
+        const s = dragStart;
+        const area = floatingArea(window);
+        const clamp = (value, low, high) => Math.max(low, Math.min(value, high));
+        if (resize) {
+            const minWidth = Math.max(window.minSize.width, floatingMinWidth);
+            const minHeight = Math.max(window.minSize.height, floatingMinHeight);
+            pendingGeometry = Qt.rect(s.x, s.y,
+                                      clamp(s.width + dx, minWidth, area.x + area.width - s.x),
+                                      clamp(s.height + dy, minHeight, area.y + area.height - s.y));
+        } else {
+            pendingGeometry = Qt.rect(clamp(s.x + dx, area.x, area.x + area.width - s.width),
+                                      clamp(s.y + dy, area.y, area.y + area.height - s.height),
+                                      s.width, s.height);
+        }
+        if (!applyTimer.running) {
+            applyTimer.start();
+        }
+    }
+
+    function applyPending() {
+        if (floatingWindow && pendingGeometry) {
+            floatingWindow.frameGeometry = pendingGeometry;
+        }
+        pendingGeometry = null;
+    }
+
+    function endDrag() {
+        applyTimer.stop();
+        applyPending();
+        dragStart = null;
+    }
+
+    // apps redraw slowly on a phone: do not ask for a new size on every touch event
+    Timer {
+        id: applyTimer
+        interval: 40
+        onTriggered: root.applyPending()
+    }
+
+    component FloatingHandle: Window {
+        id: handle
+
+        property bool resize: false
+        default property alias content: dragArea.data
+
+        // declared inside an item that has no window: Qt would wait for that one to show
+        transientParent: null
+        flags: Qt.BypassWindowManagerHint | Qt.FramelessWindowHint
+        color: "transparent"
+        visible: root.floatingWindow !== null
+
+        MouseArea {
+            id: dragArea
+            anchors.fill: parent
+            preventStealing: true
+
+            property point pressPoint
+
+            onPressed: mouse => {
+                pressPoint = Qt.point(mouse.x, mouse.y);
+                root.beginDrag();
+            }
+            onPositionChanged: mouse => root.dragTo(mouse.x - pressPoint.x, mouse.y - pressPoint.y, handle.resize)
+            onReleased: root.endDrag()
+            onCanceled: root.endDrag()
+        }
+    }
+
+    // Moves the window: lies over its title bar.
+    FloatingHandle {
+        x: root.handleFrame.x
+        y: root.handleFrame.y
+        width: Math.max(1, root.handleFrame.width)
+        height: Math.max(root.handleTitleHeight, Kirigami.Units.gridUnit * 2)
+
+        Rectangle {
+            // at the very top, to stay off the title text
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+            anchors.topMargin: 2
+            width: Kirigami.Units.gridUnit * 3
+            height: Kirigami.Units.smallSpacing
+            radius: height / 2
+            color: Kirigami.Theme.highlightColor
+        }
+    }
+
+    // Resizes the window: hangs under its bottom right corner, so that it covers nothing
+    // of the application, unless the window reaches the bottom of the screen.
+    FloatingHandle {
+        readonly property var area: root.floatingWindow ? root.floatingArea(root.floatingWindow) : Qt.rect(0, 0, 0, 0)
+
+        resize: true
+        width: Kirigami.Units.gridUnit * 3
+        height: Kirigami.Units.gridUnit * 3
+        x: root.handleFrame.x + root.handleFrame.width - width
+        y: Math.min(root.handleFrame.y + root.handleFrame.height, area.y + area.height - height)
+
+        Rectangle {
+            anchors.fill: parent
+            radius: Kirigami.Units.cornerRadius
+            color: Kirigami.Theme.highlightColor
+
+            Repeater {
+                model: 2
+                Rectangle {
+                    required property int index
+                    anchors.centerIn: parent
+                    anchors.horizontalCenterOffset: index * Kirigami.Units.smallSpacing * 2
+                    anchors.verticalCenterOffset: index * Kirigami.Units.smallSpacing * 2
+                    width: Kirigami.Units.gridUnit * (index ? 0.8 : 1.6)
+                    height: 2
+                    rotation: -45
+                    color: Kirigami.Theme.highlightedTextColor
+                }
+            }
+        }
+    }
 
     // Without convergence mode every window is maximized, except the ones marked as
     // floating in the task switcher. The mark is the window's "keep above" state: it
@@ -164,6 +333,10 @@ Loader {
             for (var i = 0; i < windows.length; i++) {
                 if (windows[i].normalWindow) {
                     root.run(windows[i]);
+                    // the old place may be off the new screen
+                    if (windows[i].keepAbove) {
+                        root.makeFloating(windows[i]);
+                    }
                 }
             }
         }
