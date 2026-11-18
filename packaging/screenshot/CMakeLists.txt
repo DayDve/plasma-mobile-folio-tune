@@ -15,8 +15,8 @@ include(KDECompilerSettings NO_POLICY_SCOPE)
 include(ECMQmlModule)
 set(QT_QML_GENERATE_QMLLS_INI OFF)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui DBus Qml Quick)
-find_package(KF6 REQUIRED COMPONENTS Config)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui DBus Qml Quick Widgets)
+find_package(KF6 REQUIRED COMPONENTS Config CoreAddons WindowSystem)
 find_package(KWin REQUIRED)
 
 set(SRC ${CMAKE_CURRENT_SOURCE_DIR}/../../kwin/screenshot)
