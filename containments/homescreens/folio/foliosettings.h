@@ -30,6 +30,10 @@ class FolioSettings : public QObject
         FolioSettings::PageTransitionEffect pageTransitionEffect READ pageTransitionEffect WRITE setPageTransitionEffect NOTIFY pageTransitionEffectChanged)
     Q_PROPERTY(FolioSettings::WallpaperBlurEffect wallpaperBlurEffect READ wallpaperBlurEffect WRITE setWallpaperBlurEffect NOTIFY wallpaperBlurEffectChanged)
     Q_PROPERTY(bool doubleTapToLock READ doubleTapToLock WRITE setDoubleTapToLock NOTIFY doubleTapToLockChanged)
+    // The navigation panel's button that hides it. Kept in plasmamobilerc rather than in the
+    // homescreen's own config, because the navigation panel reads it.
+    Q_PROPERTY(bool navigationPanelHideButton READ navigationPanelHideButton WRITE setNavigationPanelHideButton NOTIFY
+                   navigationPanelHideButtonChanged)
 
 public:
     FolioSettings(HomeScreen *parent = nullptr);
@@ -100,6 +104,9 @@ public:
     bool doubleTapToLock() const;
     void setDoubleTapToLock(bool doubleTapToLock);
 
+    bool navigationPanelHideButton() const;
+    void setNavigationPanelHideButton(bool navigationPanelHideButton);
+
     Q_INVOKABLE void load();
 
     Q_INVOKABLE bool saveLayoutToFile(QString path);
@@ -118,6 +125,7 @@ Q_SIGNALS:
     void pageTransitionEffectChanged();
     void wallpaperBlurEffectChanged();
     void doubleTapToLockChanged();
+    void navigationPanelHideButtonChanged();
 
 private:
     void save();
@@ -140,4 +148,5 @@ private:
     PageTransitionEffect m_pageTransitionEffect{SlideTransition};
     WallpaperBlurEffect m_wallpaperBlurEffect{Full};
     bool m_doubleTapToLock{false};
+    bool m_navigationPanelHideButton{false};
 };

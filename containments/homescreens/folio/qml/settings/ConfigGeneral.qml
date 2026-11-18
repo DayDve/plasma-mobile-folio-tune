@@ -188,6 +188,20 @@ SimpleKCM {
                     }
                 }
             }
+
+            FormCard.FormDelegateSeparator { above: doubleTapToLockSwitch; below: navigationPanelHideButtonSwitch }
+
+            FormCard.FormSwitchDelegate {
+                id: navigationPanelHideButtonSwitch
+                text: i18n("Button to hide the navigation panel")
+                description: i18n("Swipe up from the bottom edge to show the panel again")
+                checked: folio.FolioSettings.navigationPanelHideButton
+                onCheckedChanged: {
+                    if (checked != folio.FolioSettings.navigationPanelHideButton) {
+                        folio.FolioSettings.navigationPanelHideButton = checked;
+                    }
+                }
+            }
         }
 
         FormCard.FormHeader {

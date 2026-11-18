@@ -41,6 +41,8 @@ MobileShell.NavigationPanel {
     // hide the panel; a swipe from the screen edge brings it back
     edgeAction: MobileShell.NavigationPanelAction {
         id: hidePanelAction
+        // turned on in the Folio homescreen settings
+        visible: Plasmoid.hideButtonEnabled
         enabled: true
         // not go-down: that one closes the keyboard
         iconSource: root.isVertical ? "go-last-symbolic" : "go-bottom-symbolic"

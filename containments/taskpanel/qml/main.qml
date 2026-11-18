@@ -41,6 +41,9 @@ ContainmentItem {
     // bar alone. While hidden the panel reserves no space, so windows take the
     // whole screen.
     property bool manuallyHidden: false
+    // the button was turned off in the settings while the panel was hidden: bring it back
+    readonly property bool hideButtonEnabled: Plasmoid.hideButtonEnabled
+    onHideButtonEnabledChanged: if (!hideButtonEnabled && manuallyHidden) revealPanel()
     onManuallyHiddenChanged: {
         // Showing: grow the window back before the panel slides in. Hiding: the
         // window shrinks once the slide-out animation is done (see transitions).

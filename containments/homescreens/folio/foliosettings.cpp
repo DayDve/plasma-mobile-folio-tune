@@ -5,6 +5,9 @@
 #include "favouritesmodel.h"
 #include "pagelistmodel.h"
 
+#include <KConfigGroup>
+#include <KSharedConfig>
+
 #include <QFile>
 #include <algorithm>
 #include <QJsonArray>
@@ -31,6 +34,11 @@ const QString CFG_KEY_FAVORITES_BAR_PADDING = QStringLiteral("favoritesBarPaddin
 const QString CFG_KEY_PAGE_TRANSITION_EFFECT = QStringLiteral("pageTransitionEffect");
 const QString CFG_KEY_SHOW_WALLPAPER_BLUR = QStringLiteral("wallpaperBlurEffect");
 const QString CFG_KEY_DOUBLE_TAP_TO_LOCK = QStringLiteral("doubleTapToLock");
+
+// shared with the navigation panel (containments/taskpanel)
+const QString SHELL_CONFIG_FILE = QStringLiteral("plasmamobilerc");
+const QString SHELL_CFG_GROUP_NAVIGATION_PANEL = QStringLiteral("NavigationPanel");
+const QString SHELL_CFG_KEY_HIDE_BUTTON = QStringLiteral("hideButton");
 
 FolioSettings::FolioSettings(HomeScreen *parent)
     : QObject{parent}
@@ -232,6 +240,24 @@ void FolioSettings::setDoubleTapToLock(bool doubleTapToLock)
     }
 }
 
+bool FolioSettings::navigationPanelHideButton() const
+{
+    return m_navigationPanelHideButton;
+}
+
+void FolioSettings::setNavigationPanelHideButton(bool navigationPanelHideButton)
+{
+    if (m_navigationPanelHideButton == navigationPanelHideButton) {
+        return;
+    }
+    m_navigationPanelHideButton = navigationPanelHideButton;
+    Q_EMIT navigationPanelHideButtonChanged();
+
+    auto group = KSharedConfig::openConfig(SHELL_CONFIG_FILE, KConfig::SimpleConfig)->group(SHELL_CFG_GROUP_NAVIGATION_PANEL);
+    group.writeEntry(SHELL_CFG_KEY_HIDE_BUTTON, m_navigationPanelHideButton, KConfigGroup::Notify);
+    group.sync();
+}
+
 void FolioSettings::save()
 {
     if (!m_homeScreen) {
@@ -278,6 +304,9 @@ void FolioSettings::load()
     m_pageTransitionEffect = static_cast<PageTransitionEffect>(generalGroup.readEntry(CFG_KEY_PAGE_TRANSITION_EFFECT, (int)SlideTransition));
     m_wallpaperBlurEffect = static_cast<WallpaperBlurEffect>(generalGroup.readEntry(CFG_KEY_SHOW_WALLPAPER_BLUR, (int)Full));
     m_doubleTapToLock = generalGroup.readEntry(CFG_KEY_DOUBLE_TAP_TO_LOCK, true);
+    m_navigationPanelHideButton = KSharedConfig::openConfig(SHELL_CONFIG_FILE, KConfig::SimpleConfig)
+                                      ->group(SHELL_CFG_GROUP_NAVIGATION_PANEL)
+                                      .readEntry(SHELL_CFG_KEY_HIDE_BUTTON, false);
 
     Q_EMIT homeScreenRowsChanged();
     Q_EMIT homeScreenColumnsChanged();
@@ -291,6 +320,7 @@ void FolioSettings::load()
     Q_EMIT pageTransitionEffectChanged();
     Q_EMIT wallpaperBlurEffectChanged();
     Q_EMIT doubleTapToLockChanged();
+    Q_EMIT navigationPanelHideButtonChanged();
 }
 
 bool FolioSettings::saveLayoutToFile(QString path)

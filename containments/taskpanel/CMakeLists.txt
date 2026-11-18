@@ -20,4 +20,5 @@ target_link_libraries(org.kde.plasma.mobile.taskpanel PRIVATE
                       Qt::Sensors
                       Plasma::Plasma
                       KF6::Screen
+                      KF6::ConfigCore
                     )

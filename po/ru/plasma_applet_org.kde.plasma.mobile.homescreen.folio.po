@@ -289,3 +289,13 @@ msgstr "Параметры"
 #~ msgid "Switch between homescreens and more wallpaper options"
 #~ msgstr ""
 #~ "Переключение между главными экранами и дополнительные варианты обоев"
+
+#: qml/settings/ConfigGeneral.qml
+#, kde-format
+msgid "Button to hide the navigation panel"
+msgstr "Кнопка скрытия панели навигации"
+
+#: qml/settings/ConfigGeneral.qml
+#, kde-format
+msgid "Swipe up from the bottom edge to show the panel again"
+msgstr "Панель возвращается свайпом вверх от нижнего края"

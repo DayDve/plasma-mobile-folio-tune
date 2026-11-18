@@ -18,8 +18,29 @@ Q_DECLARE_METATYPE(QDBusPendingReply<>)
 
 TaskPanel::TaskPanel(QObject *parent, const KPluginMetaData &data, const QVariantList &args)
     : Plasma::Containment(parent, data, args)
+    , m_shellConfig{KSharedConfig::openConfig(QStringLiteral("plasmamobilerc"), KConfig::SimpleConfig)}
 {
+    m_shellConfigWatcher = KConfigWatcher::create(m_shellConfig);
+    connect(m_shellConfigWatcher.data(), &KConfigWatcher::configChanged, this, [this](const KConfigGroup &group) {
+        if (group.name() == QStringLiteral("NavigationPanel")) {
+            readShellConfig();
+        }
+    });
+    readShellConfig();
+}
 
+void TaskPanel::readShellConfig()
+{
+    const bool enabled = m_shellConfig->group(QStringLiteral("NavigationPanel")).readEntry(QStringLiteral("hideButton"), false);
+    if (enabled != m_hideButtonEnabled) {
+        m_hideButtonEnabled = enabled;
+        Q_EMIT hideButtonEnabledChanged();
+    }
+}
+
+bool TaskPanel::hideButtonEnabled() const
+{
+    return m_hideButtonEnabled;
 }
 
 void TaskPanel::triggerTaskSwitcher() const
