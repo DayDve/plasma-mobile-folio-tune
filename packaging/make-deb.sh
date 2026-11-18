@@ -9,7 +9,10 @@
 #     QML_IMPORT_PATH from /etc/xdg/plasma-workspace/env;
 #   - the navigation panel containment (org.kde.plasma.mobile.taskpanel) with a
 #     button that hides the panel, in /usr/lib/plasma-mobile-folio-tune/plugins,
-#     put ahead of the system one by QT_PLUGIN_PATH from the same file.
+#     put ahead of the system one by QT_PLUGIN_PATH from the same file;
+#   - the convergentwindows KWin script and the mobiletaskswitcher effect with
+#     floating windows, in /usr/share/plasma-mobile-folio-tune/kwin, put ahead of
+#     the system ones by XDG_DATA_DIRS from the same file.
 # Both override parts of plasma-mobile and must match it exactly, so the
 # package depends on that upstream version.
 set -eu
@@ -60,12 +63,19 @@ TP=$(find "$BUILD/taskpanel-stage" -name 'org.kde.plasma.mobile.taskpanel.so' | 
 PLUG=/usr/lib/$NAME/plugins
 install -Dm644 "$TP" "$PKG$PLUG/plasma/applets/org.kde.plasma.mobile.taskpanel.so"
 
+# KWin script and task switcher effect
+DATA=/usr/share/$NAME
+mkdir -p "$PKG$DATA/kwin/scripts" "$PKG$DATA/kwin/effects"
+cp -r "$ROOT/kwin/scripts/convergentwindows" "$PKG$DATA/kwin/scripts/"
+cp -r "$ROOT/kwin/mobiletaskswitcher/package" "$PKG$DATA/kwin/effects/mobiletaskswitcher"
+
 mkdir -p "$PKG/etc/xdg/plasma-workspace/env"
 cat > "$PKG/etc/xdg/plasma-workspace/env/$NAME.sh" <<EOF
 # $NAME: the mobileshell QML module and the navigation panel with fixes,
 # ahead of the system ones
 export QML_IMPORT_PATH=$QML\${QML_IMPORT_PATH:+:\$QML_IMPORT_PATH}
 export QT_PLUGIN_PATH=$PLUG\${QT_PLUGIN_PATH:+:\$QT_PLUGIN_PATH}
+export XDG_DATA_DIRS=$DATA:\${XDG_DATA_DIRS:-/usr/local/share:/usr/share}
 EOF
 
 # Only the files of this package: drop anything else cmake --install brought along
@@ -93,7 +103,8 @@ Description: Folio Tune homescreen and Plasma Mobile shell fixes
  plasma-mobile $UPSTREAM with changes, loaded ahead of the system ones through
  QML_IMPORT_PATH and QT_PLUGIN_PATH: the action drawer marquee no longer
  animates while hidden, and a button on the navigation panel hides it until a
- swipe from the screen edge. Log out and back in after installing.
+ swipe from the screen edge. The task switcher can make a window floating.
+ Log out and back in after installing.
 EOF
 echo /etc/xdg/plasma-workspace/env/$NAME.sh > "$PKG/DEBIAN/conffiles"
 

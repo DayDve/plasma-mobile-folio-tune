@@ -11,6 +11,48 @@ Loader {
 
     property var currentWindow
 
+    // Share of the screen height a floating window takes; what is below it stays visible.
+    readonly property real floatingHeightRatio: 0.55
+    readonly property int floatingMargin: 8
+
+    // Without convergence mode every window is maximized, except the ones marked as
+    // floating in the task switcher. The mark is the window's "keep above" state: it
+    // is what such a window needs anyway, and the switcher and this script both see it.
+    function makeFloating(window) {
+        window.noBorder = true;
+        if (window.fullScreen) {
+            return;
+        }
+        const desktop = window.desktops[0];
+        if (desktop === undefined) {
+            return;
+        }
+        const area = KWinComponents.Workspace.clientArea(KWinComponents.Workspace.MaximizeArea, window.output, desktop);
+        const geometry = window.frameGeometry;
+        if (geometry.width < area.width || geometry.height < area.height - 1) {
+            return; // already floating
+        }
+        window.setMaximize(false, false);
+        window.frameGeometry = Qt.rect(area.x + floatingMargin,
+                                       area.y + floatingMargin,
+                                       area.width - floatingMargin * 2,
+                                       Math.round(area.height * floatingHeightRatio));
+    }
+
+    function watchFloating(window) {
+        window.keepAboveChanged.connect(() => root.run(window));
+    }
+
+    Component.onCompleted: {
+        const windows = KWinComponents.Workspace.windows;
+        for (let i = 0; i < windows.length; i++) {
+            if (windows[i].normalWindow) {
+                root.watchFloating(windows[i]);
+                root.run(windows[i]);
+            }
+        }
+    }
+
     function run(window) {
         // HACK: don't maximize xwaylandvideobridge
         // see: https://invent.kde.org/plasma/plasma-mobile/-/issues/324
@@ -24,6 +66,8 @@ Loader {
 
         if (ShellSettings.Settings.convergenceModeEnabled) {
             window.noBorder = false;
+        } else if (window.keepAbove) {
+            root.makeFloating(window);
         } else {
             if (!window.fullScreen) {
                 const output = window.output;
@@ -89,6 +133,7 @@ Loader {
 
         function onWindowAdded(window) {
             if (window.normalWindow) {
+                root.watchFloating(window);
                 window.interactiveMoveResizeFinished.connect((window) => {
                     root.run(window);
                 });
