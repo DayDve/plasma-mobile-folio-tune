@@ -33,10 +33,12 @@ Loader {
         return window;
     }
 
-    // Where the handles sit. It does not follow the window during a drag: touch points
-    // are mapped through the handle's position, which must not change under the finger.
+    // Handles are two layers. What takes the touch does not move during a drag: touch
+    // points are mapped through its position, which must not change under the finger.
+    // What is drawn ignores input and stays on the window all the time.
+    readonly property var liveFrame: floatingWindow ? floatingWindow.frameGeometry : Qt.rect(0, 0, 0, 0)
+    readonly property var liveArea: floatingWindow ? floatingArea(floatingWindow) : Qt.rect(0, 0, 0, 0)
     property var handleFrame: Qt.rect(0, 0, 0, 0)
-    property int handleTitleHeight: 0
     property var dragStart: null
     property var pendingGeometry: null
 
@@ -44,15 +46,7 @@ Loader {
         target: root
         property: "handleFrame"
         when: root.floatingWindow !== null && root.dragStart === null
-        value: root.floatingWindow ? root.floatingWindow.frameGeometry : Qt.rect(0, 0, 0, 0)
-        restoreMode: Binding.RestoreNone
-    }
-
-    Binding {
-        target: root
-        property: "handleTitleHeight"
-        when: root.floatingWindow !== null && root.dragStart === null
-        value: root.floatingWindow ? root.floatingWindow.clientGeometry.y - root.floatingWindow.frameGeometry.y : 0
+        value: root.liveFrame
         restoreMode: Binding.RestoreNone
     }
 
@@ -113,7 +107,6 @@ Loader {
         id: handle
 
         property bool resize: false
-        default property alias content: dragArea.data
 
         // declared inside an item that has no window: Qt would wait for that one to show
         transientParent: null
@@ -122,7 +115,6 @@ Loader {
         visible: root.floatingWindow !== null
 
         MouseArea {
-            id: dragArea
             anchors.fill: parent
             preventStealing: true
 
@@ -138,53 +130,64 @@ Loader {
         }
     }
 
-    // Moves the window: lies over its title bar.
+    component HandleMark: Window {
+        transientParent: null
+        flags: Qt.BypassWindowManagerHint | Qt.FramelessWindowHint | Qt.WindowTransparentForInput
+        color: "transparent"
+        visible: root.floatingWindow !== null
+    }
+
+    // Moves the window. Only the middle of its top edge: applications without a title
+    // bar have their own buttons in the corners.
     FloatingHandle {
-        x: root.handleFrame.x
+        width: Kirigami.Units.gridUnit * 6
+        height: Kirigami.Units.gridUnit * 1.5
+        x: root.handleFrame.x + (root.handleFrame.width - width) / 2
         y: root.handleFrame.y
-        width: Math.max(1, root.handleFrame.width)
-        height: Math.max(root.handleTitleHeight, Kirigami.Units.gridUnit * 2)
+    }
+
+    HandleMark {
+        width: Kirigami.Units.gridUnit * 3
+        height: Kirigami.Units.smallSpacing
+        x: root.liveFrame.x + (root.liveFrame.width - width) / 2
+        y: root.liveFrame.y + 2
 
         Rectangle {
-            // at the very top, to stay off the title text
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.top
-            anchors.topMargin: 2
-            width: Kirigami.Units.gridUnit * 3
-            height: Kirigami.Units.smallSpacing
+            anchors.fill: parent
             radius: height / 2
             color: Kirigami.Theme.highlightColor
         }
     }
 
-    // Resizes the window: hangs under its bottom right corner, so that it covers nothing
-    // of the application, unless the window reaches the bottom of the screen.
+    // Resizes the window: a finger-sized area around its bottom right corner.
     FloatingHandle {
-        readonly property var area: root.floatingWindow ? root.floatingArea(root.floatingWindow) : Qt.rect(0, 0, 0, 0)
-
         resize: true
         width: Kirigami.Units.gridUnit * 3
         height: Kirigami.Units.gridUnit * 3
-        x: root.handleFrame.x + root.handleFrame.width - width
-        y: Math.min(root.handleFrame.y + root.handleFrame.height, area.y + area.height - height)
+        x: Math.min(root.handleFrame.x + root.handleFrame.width - width / 2, root.liveArea.x + root.liveArea.width - width)
+        y: Math.min(root.handleFrame.y + root.handleFrame.height - height / 2, root.liveArea.y + root.liveArea.height - height)
+    }
 
-        Rectangle {
+    // A bracket lying on the corner: the corner of a rounded frame, the rest cut off.
+    HandleMark {
+        width: Kirigami.Units.gridUnit * 1.5
+        height: Kirigami.Units.gridUnit * 1.5
+        x: root.liveFrame.x + root.liveFrame.width - width
+        y: root.liveFrame.y + root.liveFrame.height - height
+
+        Item {
             anchors.fill: parent
-            radius: Kirigami.Units.cornerRadius
-            color: Kirigami.Theme.highlightColor
+            clip: true
 
-            Repeater {
-                model: 2
-                Rectangle {
-                    required property int index
-                    anchors.centerIn: parent
-                    anchors.horizontalCenterOffset: index * Kirigami.Units.smallSpacing * 2
-                    anchors.verticalCenterOffset: index * Kirigami.Units.smallSpacing * 2
-                    width: Kirigami.Units.gridUnit * (index ? 0.8 : 1.6)
-                    height: 2
-                    rotation: -45
-                    color: Kirigami.Theme.highlightedTextColor
-                }
+            Rectangle {
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                width: parent.width * 2
+                height: parent.height * 2
+                radius: Kirigami.Units.cornerRadius
+                color: "transparent"
+                border.width: Kirigami.Units.smallSpacing
+                border.color: Kirigami.Theme.highlightColor
             }
         }
     }
