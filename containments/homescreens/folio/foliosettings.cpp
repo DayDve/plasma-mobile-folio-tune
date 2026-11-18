@@ -9,6 +9,8 @@
 #include <KSharedConfig>
 
 #include <QFile>
+#include <QGuiApplication>
+#include <QScreen>
 #include <algorithm>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -39,6 +41,15 @@ const QString CFG_KEY_DOUBLE_TAP_TO_LOCK = QStringLiteral("doubleTapToLock");
 const QString SHELL_CONFIG_FILE = QStringLiteral("plasmamobilerc");
 const QString SHELL_CFG_GROUP_NAVIGATION_PANEL = QStringLiteral("NavigationPanel");
 const QString SHELL_CFG_KEY_HIDE_BUTTON = QStringLiteral("hideButton");
+const QString SHELL_CFG_GROUP_PANELS = QStringLiteral("Panels");
+const QString SHELL_CFG_KEY_NAVIGATION_PANEL_HEIGHT = QStringLiteral("navigationPanelHeight");
+
+// plasmamobilerc holds the height in physical pixels
+qreal screenScale()
+{
+    const QScreen *screen = QGuiApplication::primaryScreen();
+    return screen ? screen->devicePixelRatio() : 1.0;
+}
 
 FolioSettings::FolioSettings(HomeScreen *parent)
     : QObject{parent}
@@ -258,6 +269,29 @@ void FolioSettings::setNavigationPanelHideButton(bool navigationPanelHideButton)
     group.sync();
 }
 
+int FolioSettings::navigationPanelHeight() const
+{
+    return m_navigationPanelHeight;
+}
+
+void FolioSettings::setNavigationPanelHeight(int navigationPanelHeight)
+{
+    if (m_navigationPanelHeight == navigationPanelHeight) {
+        return;
+    }
+    m_navigationPanelHeight = navigationPanelHeight;
+    Q_EMIT navigationPanelHeightChanged();
+
+    // The panel moves to another screen edge with the rotation: same height on all of them.
+    auto config = KSharedConfig::openConfig(SHELL_CONFIG_FILE);
+    KConfigGroup panels = config->group(SHELL_CFG_GROUP_PANELS);
+    const int physicalHeight = qRound(m_navigationPanelHeight * screenScale());
+    for (const auto &edge : {QStringLiteral("WhenOnBottom"), QStringLiteral("WhenOnLeft"), QStringLiteral("WhenOnRight"), QStringLiteral("WhenOnTop")}) {
+        panels.group(edge).writeEntry(SHELL_CFG_KEY_NAVIGATION_PANEL_HEIGHT, physicalHeight, KConfigGroup::Notify);
+    }
+    config->sync();
+}
+
 void FolioSettings::save()
 {
     if (!m_homeScreen) {
@@ -307,6 +341,11 @@ void FolioSettings::load()
     m_navigationPanelHideButton = KSharedConfig::openConfig(SHELL_CONFIG_FILE, KConfig::SimpleConfig)
                                       ->group(SHELL_CFG_GROUP_NAVIGATION_PANEL)
                                       .readEntry(SHELL_CFG_KEY_HIDE_BUTTON, false);
+    const qreal physicalPanelHeight = KSharedConfig::openConfig(SHELL_CONFIG_FILE)
+                                          ->group(SHELL_CFG_GROUP_PANELS)
+                                          .group(QStringLiteral("WhenOnBottom"))
+                                          .readEntry(SHELL_CFG_KEY_NAVIGATION_PANEL_HEIGHT, 0.0);
+    m_navigationPanelHeight = physicalPanelHeight > 0 ? qRound(physicalPanelHeight / screenScale()) : 0;
 
     Q_EMIT homeScreenRowsChanged();
     Q_EMIT homeScreenColumnsChanged();
@@ -321,6 +360,7 @@ void FolioSettings::load()
     Q_EMIT wallpaperBlurEffectChanged();
     Q_EMIT doubleTapToLockChanged();
     Q_EMIT navigationPanelHideButtonChanged();
+    Q_EMIT navigationPanelHeightChanged();
 }
 
 bool FolioSettings::saveLayoutToFile(QString path)

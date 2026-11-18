@@ -202,6 +202,26 @@ SimpleKCM {
                     }
                 }
             }
+
+            FormCard.FormDelegateSeparator { above: navigationPanelHideButtonSwitch; below: navigationPanelHeightSpinBox }
+
+            FormCard.FormSpinBoxDelegate {
+                id: navigationPanelHeightSpinBox
+                // the shell's default when no height is set
+                readonly property int currentHeight: folio.FolioSettings.navigationPanelHeight > 0
+                    ? folio.FolioSettings.navigationPanelHeight : Kirigami.Units.gridUnit * 2
+
+                label: i18n("Navigation panel height")
+                // anything thinner would be taken for the strip left by the hidden panel
+                from: Kirigami.Units.gridUnit + 2
+                to: 64
+                value: currentHeight
+                onValueChanged: {
+                    if (value !== currentHeight) {
+                        folio.FolioSettings.navigationPanelHeight = value;
+                    }
+                }
+            }
         }
 
         FormCard.FormHeader {

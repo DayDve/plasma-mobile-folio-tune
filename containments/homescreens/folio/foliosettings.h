@@ -34,6 +34,9 @@ class FolioSettings : public QObject
     // homescreen's own config, because the navigation panel reads it.
     Q_PROPERTY(bool navigationPanelHideButton READ navigationPanelHideButton WRITE setNavigationPanelHideButton NOTIFY
                    navigationPanelHideButtonChanged)
+    // Thickness of the navigation panel in device-independent pixels, 0 when not set.
+    // Also in plasmamobilerc, where the shell reads it ([Panels][WhenOn*] navigationPanelHeight).
+    Q_PROPERTY(int navigationPanelHeight READ navigationPanelHeight WRITE setNavigationPanelHeight NOTIFY navigationPanelHeightChanged)
 
 public:
     FolioSettings(HomeScreen *parent = nullptr);
@@ -107,6 +110,9 @@ public:
     bool navigationPanelHideButton() const;
     void setNavigationPanelHideButton(bool navigationPanelHideButton);
 
+    int navigationPanelHeight() const;
+    void setNavigationPanelHeight(int navigationPanelHeight);
+
     Q_INVOKABLE void load();
 
     Q_INVOKABLE bool saveLayoutToFile(QString path);
@@ -126,6 +132,7 @@ Q_SIGNALS:
     void wallpaperBlurEffectChanged();
     void doubleTapToLockChanged();
     void navigationPanelHideButtonChanged();
+    void navigationPanelHeightChanged();
 
 private:
     void save();
@@ -149,4 +156,5 @@ private:
     WallpaperBlurEffect m_wallpaperBlurEffect{Full};
     bool m_doubleTapToLock{false};
     bool m_navigationPanelHideButton{false};
+    int m_navigationPanelHeight{0};
 };

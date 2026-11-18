@@ -299,3 +299,8 @@ msgstr "Кнопка скрытия панели навигации"
 #, kde-format
 msgid "Swipe up from the bottom edge to show the panel again"
 msgstr "Панель возвращается свайпом вверх от нижнего края"
+
+#: qml/settings/ConfigGeneral.qml
+#, kde-format
+msgid "Navigation panel height"
+msgstr "Высота панели навигации"
