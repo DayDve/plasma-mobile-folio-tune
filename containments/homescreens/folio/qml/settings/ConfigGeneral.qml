@@ -63,7 +63,7 @@ SimpleKCM {
             readonly property string numOfRowsText: i18n("Number of rows")
             readonly property string numOfColumnsText: i18n("Number of columns")
 
-            FormCard.FormSpinBoxDelegate {
+            SettingsSliderDelegate {
                 id: iconSizeSpinBox
                 label: i18n("Size of icons on homescreen")
                 from: 16
@@ -76,7 +76,7 @@ SimpleKCM {
                 }
             }
 
-            FormCard.FormSpinBoxDelegate {
+            SettingsSliderDelegate {
                 id: rowsSpinBox
                 label: iconsCard.isVerticalOrientation ? iconsCard.numOfRowsText : iconsCard.numOfColumnsText
                 from: 3
@@ -89,7 +89,7 @@ SimpleKCM {
                 }
             }
 
-            FormCard.FormSpinBoxDelegate {
+            SettingsSliderDelegate {
                 id: columnsSpinBox
                 label: iconsCard.isVerticalOrientation ? iconsCard.numOfColumnsText : iconsCard.numOfRowsText
                 from: 3
@@ -218,7 +218,7 @@ SimpleKCM {
 
             FormCard.FormDelegateSeparator { above: navigationPanelHideButtonSwitch; below: navigationPanelHeightSpinBox }
 
-            FormCard.FormSpinBoxDelegate {
+            SettingsSliderDelegate {
                 id: navigationPanelHeightSpinBox
                 // the shell's default when no height is set
                 readonly property int currentHeight: folio.FolioSettings.navigationPanelHeight > 0
@@ -269,7 +269,7 @@ SimpleKCM {
 
             FormCard.FormDelegateSeparator { above: favouritesBarFitToIcons; below: favouritesBarPadding; visible: favouritesBarPadding.visible }
 
-            FormCard.FormSpinBoxDelegate {
+            SettingsSliderDelegate {
                 id: favouritesBarPadding
                 visible: folio.FolioSettings.favouritesBarFitToIcons
                 label: i18n("Padding around icons")

@@ -72,6 +72,7 @@ ecm_target_qml_sources(org.kde.plasma.mobile.homescreen.folio SOURCES
     qml/settings/SettingsButton.qml
     qml/settings/SettingsComponent.qml
     qml/settings/ConfigGeneral.qml
+    qml/settings/SettingsSliderDelegate.qml
     PATH settings
 )
 
