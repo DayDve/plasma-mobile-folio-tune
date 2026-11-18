@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2023 Devin Lin <devin@kde.org>
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
+import QtQml
 import QtQuick
 import org.kde.kirigami as Kirigami
 import org.kde.kwin as KWinComponents
@@ -15,8 +16,10 @@ Loader {
     // Share of the screen height a floating window takes; what is below it stays visible.
     readonly property real floatingHeightRatio: 0.55
     readonly property int floatingMargin: 8
-    readonly property int floatingMinWidth: 240
+    readonly property int floatingMinWidth: 310
     readonly property int floatingMinHeight: 120
+    // Share of the screen width a window shrunk to a miniature takes.
+    readonly property real miniWidthRatio: 0.4
 
     // KWin reports its own windows, the handles below among them, as normal ones too.
     function isAppWindow(window) {
@@ -26,7 +29,7 @@ Loader {
     // The active floating window: it gets the handles below.
     readonly property var floatingWindow: {
         const window = KWinComponents.Workspace.activeWindow;
-        if (!window || !root.isAppWindow(window) || !window.keepAbove || window.fullScreen || window.minimized
+        if (!window || !root.isAppWindow(window) || !window.skipPager || window.fullScreen || window.minimized
                 || ShellSettings.Settings.convergenceModeEnabled) {
             return null;
         }
@@ -194,6 +197,7 @@ Loader {
 
     component FloatingButton: MouseArea {
         property alias iconName: buttonIcon.source
+        property alias iconColor: buttonIcon.color
 
         width: Kirigami.Units.gridUnit * 2
         height: Kirigami.Units.gridUnit * 2
@@ -208,7 +212,34 @@ Loader {
         }
     }
 
-    // Top right corner: back to full screen, and close.
+    // Next to the application icon: stay above other windows.
+    Window {
+        transientParent: null
+        flags: Qt.BypassWindowManagerHint | Qt.FramelessWindowHint
+        color: "transparent"
+        visible: root.floatingWindow !== null
+        width: pinButton.width
+        height: pinButton.height
+        x: root.liveFrame.x + Kirigami.Units.gridUnit * 2
+        y: root.liveFrame.y
+
+        Rectangle {
+            anchors.fill: parent
+            radius: Kirigami.Units.cornerRadius
+            color: Kirigami.Theme.backgroundColor
+            opacity: 0.85
+        }
+
+        FloatingButton {
+            id: pinButton
+            readonly property bool pinned: root.floatingWindow !== null && root.floatingWindow.keepAbove
+            iconName: "window-pin"
+            iconColor: pinned ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
+            onClicked: root.floatingWindow.keepAbove = !root.floatingWindow.keepAbove
+        }
+    }
+
+    // Top right corner: shrink to a miniature, back to full screen, and close.
     Window {
         transientParent: null
         flags: Qt.BypassWindowManagerHint | Qt.FramelessWindowHint
@@ -230,8 +261,13 @@ Loader {
             id: buttonRow
 
             FloatingButton {
+                iconName: "window-minimize"
+                onClicked: root.toMini(root.floatingWindow)
+            }
+
+            FloatingButton {
                 iconName: "window-maximize"
-                onClicked: root.floatingWindow.keepAbove = false
+                onClicked: root.floatingWindow.skipPager = false
             }
 
             FloatingButton {
@@ -241,9 +277,124 @@ Loader {
         }
     }
 
+    // Miniatures: the window itself is minimized, and a live scaled copy of it stays
+    // above everything. The application keeps its size, and a tap brings it back.
+    property var miniWindows: []
+    property var miniPlaces: ({})
+
+    function toMini(window) {
+        miniWindows = miniWindows.concat([window]);
+        window.minimized = true;
+    }
+
+    function removeMini(window) {
+        if (miniWindows.indexOf(window) >= 0) {
+            miniWindows = miniWindows.filter(w => w !== window);
+        }
+    }
+
+    function restoreMini(window) {
+        window.minimized = false;
+        KWinComponents.Workspace.activeWindow = window;
+    }
+
+    Instantiator {
+        model: root.miniWindows
+
+        delegate: QtObject {
+            id: mini
+
+            required property var modelData
+            required property int index
+
+            readonly property var window: modelData
+            readonly property var area: root.floatingArea(window)
+            readonly property int miniWidth: Math.round(area.width * root.miniWidthRatio)
+            readonly property int miniHeight: Math.round(miniWidth * window.height / window.width)
+            readonly property var place: root.miniPlaces[window.internalId]
+            property real posX: place ? place.x : area.x + area.width - miniWidth - root.floatingMargin
+            // top right by default: the on-screen keyboard covers the bottom
+            property real posY: place ? place.y
+                                      : area.y + root.floatingMargin + (miniHeight + root.floatingMargin) * index
+
+            // the same two layers as the handles of a floating window
+            readonly property Window picture: Window {
+                transientParent: null
+                flags: Qt.BypassWindowManagerHint | Qt.FramelessWindowHint | Qt.WindowTransparentForInput
+                color: "transparent"
+                visible: true
+                x: mini.posX
+                y: mini.posY
+                width: mini.miniWidth
+                height: mini.miniHeight
+
+                KWinComponents.WindowThumbnail {
+                    anchors.fill: parent
+                    client: mini.window
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: "transparent"
+                    border.width: 1
+                    border.color: Kirigami.Theme.highlightColor
+                }
+            }
+
+            readonly property Window touchArea: Window {
+                id: touchWindow
+
+                transientParent: null
+                flags: Qt.BypassWindowManagerHint | Qt.FramelessWindowHint
+                color: "transparent"
+                visible: true
+                width: mini.miniWidth
+                height: mini.miniHeight
+                Component.onCompleted: {
+                    x = mini.posX;
+                    y = mini.posY;
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    preventStealing: true
+
+                    property point pressPoint
+                    property point startPos
+                    property bool moved: false
+
+                    onPressed: mouse => {
+                        pressPoint = Qt.point(mouse.x, mouse.y);
+                        startPos = Qt.point(mini.posX, mini.posY);
+                        moved = false;
+                    }
+                    onPositionChanged: mouse => {
+                        const dx = mouse.x - pressPoint.x;
+                        const dy = mouse.y - pressPoint.y;
+                        moved = moved || Math.abs(dx) > Kirigami.Units.gridUnit / 2 || Math.abs(dy) > Kirigami.Units.gridUnit / 2;
+                        if (moved) {
+                            const a = mini.area;
+                            mini.posX = Math.max(a.x, Math.min(startPos.x + dx, a.x + a.width - mini.miniWidth));
+                            mini.posY = Math.max(a.y, Math.min(startPos.y + dy, a.y + a.height - mini.miniHeight));
+                        }
+                    }
+                    onReleased: {
+                        if (moved) {
+                            root.miniPlaces[mini.window.internalId] = Qt.point(mini.posX, mini.posY);
+                            touchWindow.x = mini.posX;
+                            touchWindow.y = mini.posY;
+                        } else {
+                            root.restoreMini(mini.window);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // Without convergence mode every window is maximized, except the ones marked as
-    // floating in the task switcher. The mark is the window's "keep above" state: it
-    // is what such a window needs anyway, and the switcher and this script both see it.
+    // floating in the task switcher. The mark is "skip pager": there is no pager here,
+    // and the switcher and this script both see it. "Keep above" is left for pinning.
     function makeFloating(window) {
         if (ShellSettings.Settings.convergenceModeEnabled || window.fullScreen) {
             return;
@@ -262,11 +413,20 @@ Loader {
     }
 
     function watchFloating(window) {
-        window.keepAboveChanged.connect(() => {
-            if (window.keepAbove) {
+        window.skipPagerChanged.connect(() => {
+            if (window.skipPager) {
                 root.makeFloating(window);
             } else {
+                window.keepAbove = false;
                 root.run(window);
+            }
+        });
+        window.minimizedChanged.connect(() => {
+            if (!window.minimized) {
+                root.removeMini(window);
+            } else if (window.skipPager && window.keepAbove && root.miniWindows.indexOf(window) < 0) {
+                // a pinned window stays when the home button minimizes everything
+                window.minimized = false;
             }
         });
     }
@@ -294,7 +454,7 @@ Loader {
 
         if (ShellSettings.Settings.convergenceModeEnabled) {
             window.noBorder = false;
-        } else if (window.keepAbove) {
+        } else if (window.skipPager) {
             // floating: keep the place given by makeFloating(), and a title bar to tell
             // the window from what is below it
             window.noBorder = false;
@@ -371,6 +531,10 @@ Loader {
             }
         }
 
+        function onWindowRemoved(window) {
+            root.removeMini(window);
+        }
+
         function onWindowActivated(window) {
             if (root.isAppWindow(window)) {
                 currentWindow = window;
@@ -391,7 +555,7 @@ Loader {
                 if (root.isAppWindow(windows[i])) {
                     root.run(windows[i]);
                     // the old place may be off the new screen
-                    if (windows[i].keepAbove) {
+                    if (windows[i].skipPager) {
                         root.makeFloating(windows[i]);
                     }
                 }

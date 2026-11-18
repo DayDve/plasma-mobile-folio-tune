@@ -49,14 +49,14 @@ Item {
 
     function activateApp(): void {
         // a floating window (see the convergentwindows script) keeps its size
-        if (!ShellSettings.Settings.convergenceModeEnabled && !delegate.window.keepAbove) {
+        if (!ShellSettings.Settings.convergenceModeEnabled && !delegate.window.skipPager) {
             delegate.window.setMaximize(true, true);
         }
         delegate.taskSwitcherHelpers.openApp(model.index);
     }
 
     function toggleFloating(): void {
-        delegate.window.keepAbove = !delegate.window.keepAbove;
+        delegate.window.skipPager = !delegate.window.skipPager;
         delegate.activateApp();
     }
 
@@ -200,7 +200,7 @@ Item {
                     Layout.alignment: Qt.AlignVCenter
                     z: 99
                     visible: !ShellSettings.Settings.convergenceModeEnabled
-                    icon.name: delegate.window.keepAbove ? "window-maximize" : "window-restore"
+                    icon.name: delegate.window.skipPager ? "window-maximize" : "window-restore"
                     icon.width: Kirigami.Units.iconSizes.smallMedium
                     icon.height: Kirigami.Units.iconSizes.smallMedium
                     onClicked: delegate.toggleFloating()
