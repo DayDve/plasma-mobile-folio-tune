@@ -136,7 +136,20 @@ SimpleKCM {
                 }
             }
 
-            FormCard.FormDelegateSeparator { above: showLabelsInFavourites; below: lockLayout }
+            FormCard.FormDelegateSeparator { above: showLabelsInFavourites; below: showNotificationBadges }
+
+            FormCard.FormSwitchDelegate {
+                id: showNotificationBadges
+                text: i18n("Show notification badges")
+                checked: folio.FolioSettings.showNotificationBadges
+                onCheckedChanged: {
+                    if (checked != folio.FolioSettings.showNotificationBadges) {
+                        folio.FolioSettings.showNotificationBadges = checked;
+                    }
+                }
+            }
+
+            FormCard.FormDelegateSeparator { above: showNotificationBadges; below: lockLayout }
 
             FormCard.FormSwitchDelegate {
                 id: lockLayout

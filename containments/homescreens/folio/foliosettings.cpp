@@ -28,6 +28,7 @@ const QString CFG_KEY_HOMESCREEN_ROWS = QStringLiteral("homeScreenRows");
 const QString CFG_KEY_HOMESCREEN_COLS = QStringLiteral("homeScreenColumns");
 const QString CFG_KEY_SHOW_PAGES_APPLABELS = QStringLiteral("showPagesAppLabels");
 const QString CFG_KEY_SHOW_FAVORITES_APPLABELS = QStringLiteral("showFavoritesAppLabels");
+const QString CFG_KEY_SHOW_NOTIFICATION_BADGES = QStringLiteral("showNotificationBadges");
 const QString CFG_KEY_LOCK_LAYOUT = QStringLiteral("lockLayout");
 const QString CFG_KEY_DELEGATE_ICON_SIZE = QStringLiteral("delegateIconSize");
 const QString CFG_KEY_SHOW_FAVORITES_BAR_BACKGROUND = QStringLiteral("showFavoritesBarBackground");
@@ -120,6 +121,20 @@ void FolioSettings::setShowPagesAppLabels(bool showPagesAppLabels)
     if (m_showPagesAppLabels != showPagesAppLabels) {
         m_showPagesAppLabels = showPagesAppLabels;
         Q_EMIT showPagesAppLabelsChanged();
+        save();
+    }
+}
+
+bool FolioSettings::showNotificationBadges() const
+{
+    return m_showNotificationBadges;
+}
+
+void FolioSettings::setShowNotificationBadges(bool showNotificationBadges)
+{
+    if (m_showNotificationBadges != showNotificationBadges) {
+        m_showNotificationBadges = showNotificationBadges;
+        Q_EMIT showNotificationBadgesChanged();
         save();
     }
 }
@@ -304,6 +319,7 @@ void FolioSettings::save()
     generalGroup.writeEntry(CFG_KEY_HOMESCREEN_COLS, m_homeScreenColumns);
     generalGroup.writeEntry(CFG_KEY_SHOW_PAGES_APPLABELS, m_showPagesAppLabels);
     generalGroup.writeEntry(CFG_KEY_SHOW_FAVORITES_APPLABELS, m_showFavouritesAppLabels);
+    generalGroup.writeEntry(CFG_KEY_SHOW_NOTIFICATION_BADGES, m_showNotificationBadges);
     generalGroup.writeEntry(CFG_KEY_LOCK_LAYOUT, m_lockLayout);
     generalGroup.writeEntry(CFG_KEY_DELEGATE_ICON_SIZE, m_delegateIconSize);
     generalGroup.writeEntry(CFG_KEY_SHOW_FAVORITES_BAR_BACKGROUND, m_showFavouritesBarBackground);
@@ -330,6 +346,7 @@ void FolioSettings::load()
     m_homeScreenColumns = generalGroup.readEntry(CFG_KEY_HOMESCREEN_COLS, 4);
     m_showPagesAppLabels = generalGroup.readEntry(CFG_KEY_SHOW_PAGES_APPLABELS, true);
     m_showFavouritesAppLabels = generalGroup.readEntry(CFG_KEY_SHOW_FAVORITES_APPLABELS, false);
+    m_showNotificationBadges = generalGroup.readEntry(CFG_KEY_SHOW_NOTIFICATION_BADGES, true);
     m_lockLayout = generalGroup.readEntry(CFG_KEY_LOCK_LAYOUT, false);
     m_delegateIconSize = generalGroup.readEntry(CFG_KEY_DELEGATE_ICON_SIZE, 48);
     m_showFavouritesBarBackground = generalGroup.readEntry(CFG_KEY_SHOW_FAVORITES_BAR_BACKGROUND, true);
@@ -351,6 +368,7 @@ void FolioSettings::load()
     Q_EMIT homeScreenColumnsChanged();
     Q_EMIT showPagesAppLabels();
     Q_EMIT showFavouritesAppLabelsChanged();
+    Q_EMIT showNotificationBadgesChanged();
     Q_EMIT lockLayoutChanged();
     Q_EMIT delegateIconSizeChanged();
     Q_EMIT showFavouritesBarBackgroundChanged();

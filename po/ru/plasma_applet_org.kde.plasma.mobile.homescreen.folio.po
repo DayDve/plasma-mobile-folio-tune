@@ -304,3 +304,8 @@ msgstr "Панель возвращается свайпом вверх от н�
 #, kde-format
 msgid "Navigation panel height"
 msgstr "Высота панели навигации"
+
+#: qml/settings/ConfigGeneral.qml
+#, kde-format
+msgid "Show notification badges"
+msgstr "Показывать бейджи уведомлений"

@@ -117,7 +117,7 @@ AbstractDelegate {
 
             Rectangle {
                 id: badge
-                visible: launcherEntry.badgeCount > 0
+                visible: root.folio.FolioSettings.showNotificationBadges && launcherEntry.badgeCount > 0
                 anchors {
                     right: parent.right
                     top: parent.top

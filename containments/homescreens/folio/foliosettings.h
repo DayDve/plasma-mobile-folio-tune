@@ -21,6 +21,7 @@ class FolioSettings : public QObject
     Q_PROPERTY(int homeScreenColumns READ homeScreenColumns WRITE setHomeScreenColumns NOTIFY homeScreenColumnsChanged)
     Q_PROPERTY(bool showPagesAppLabels READ showPagesAppLabels WRITE setShowPagesAppLabels NOTIFY showPagesAppLabelsChanged)
     Q_PROPERTY(bool showFavouritesAppLabels READ showFavouritesAppLabels WRITE setShowFavouritesAppLabels NOTIFY showFavouritesAppLabelsChanged)
+    Q_PROPERTY(bool showNotificationBadges READ showNotificationBadges WRITE setShowNotificationBadges NOTIFY showNotificationBadgesChanged)
     Q_PROPERTY(bool lockLayout READ lockLayout WRITE setLockLayout NOTIFY lockLayoutChanged)
     Q_PROPERTY(int delegateIconSize READ delegateIconSize WRITE setDelegateIconSize NOTIFY delegateIconSizeChanged)
     Q_PROPERTY(bool showFavouritesBarBackground READ showFavouritesBarBackground WRITE setShowFavouritesBarBackground NOTIFY showFavouritesBarBackgroundChanged)
@@ -81,6 +82,9 @@ public:
     bool showFavouritesAppLabels() const;
     void setShowFavouritesAppLabels(bool showFavouritesAppLabels);
 
+    bool showNotificationBadges() const;
+    void setShowNotificationBadges(bool showNotificationBadges);
+
     bool lockLayout() const;
     void setLockLayout(bool lockLayout);
 
@@ -123,6 +127,7 @@ Q_SIGNALS:
     void homeScreenColumnsChanged();
     void showPagesAppLabelsChanged();
     void showFavouritesAppLabelsChanged();
+    void showNotificationBadgesChanged();
     void lockLayoutChanged();
     void delegateIconSizeChanged();
     void showFavouritesBarBackgroundChanged();
@@ -147,6 +152,7 @@ private:
     int m_homeScreenColumns{4};
     bool m_showPagesAppLabels{false};
     bool m_showFavouritesAppLabels{false};
+    bool m_showNotificationBadges{true};
     bool m_lockLayout{false};
     qreal m_delegateIconSize{48};
     bool m_showFavouritesBarBackground{false};
