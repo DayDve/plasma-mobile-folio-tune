@@ -21,6 +21,8 @@ FormCard.AbstractFormDelegate {
     property int stepSize: 1
     property int value: 0
 
+    // The buttons show characters: the "list-remove" icon of Breeze is a red cross, and
+    // its "value-decrease" does not match "value-increase" in weight or position.
     readonly property real buttonSize: Kirigami.Units.gridUnit * 3
 
     function setClamped(newValue: int): void {
@@ -56,7 +58,8 @@ FormCard.AbstractFormDelegate {
             QQC2.ToolButton {
                 Layout.preferredWidth: root.buttonSize
                 Layout.preferredHeight: root.buttonSize
-                icon.name: "list-remove-symbolic"
+                text: "−"
+                font.pixelSize: Kirigami.Units.gridUnit * 1.5
                 enabled: root.value > root.from
                 autoRepeat: true
                 onClicked: root.setClamped(root.value - root.stepSize)
@@ -86,7 +89,8 @@ FormCard.AbstractFormDelegate {
             QQC2.ToolButton {
                 Layout.preferredWidth: root.buttonSize
                 Layout.preferredHeight: root.buttonSize
-                icon.name: "list-add-symbolic"
+                text: "+"
+                font.pixelSize: Kirigami.Units.gridUnit * 1.5
                 enabled: root.value < root.to
                 autoRepeat: true
                 onClicked: root.setClamped(root.value + root.stepSize)
