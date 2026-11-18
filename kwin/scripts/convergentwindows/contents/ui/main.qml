@@ -261,7 +261,7 @@ Loader {
             id: buttonRow
 
             FloatingButton {
-                iconName: "window-minimize"
+                iconName: "window-minimize-pip"
                 onClicked: root.toMini(root.floatingWindow)
             }
 
