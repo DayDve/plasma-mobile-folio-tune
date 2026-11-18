@@ -15,7 +15,7 @@ Loader {
     // Share of the screen height a floating window takes; what is below it stays visible.
     readonly property real floatingHeightRatio: 0.55
     readonly property int floatingMargin: 8
-    readonly property int floatingMinWidth: 160
+    readonly property int floatingMinWidth: 240
     readonly property int floatingMinHeight: 120
 
     // KWin reports its own windows, the handles below among them, as normal ones too.
@@ -140,7 +140,7 @@ Loader {
     // Moves the window. Only the middle of its top edge: applications without a title
     // bar have their own buttons in the corners.
     FloatingHandle {
-        width: Kirigami.Units.gridUnit * 6
+        width: Kirigami.Units.gridUnit * 5
         height: Kirigami.Units.gridUnit * 1.5
         x: root.handleFrame.x + (root.handleFrame.width - width) / 2
         y: root.handleFrame.y
@@ -188,6 +188,55 @@ Loader {
                 color: "transparent"
                 border.width: Kirigami.Units.smallSpacing
                 border.color: Kirigami.Theme.highlightColor
+            }
+        }
+    }
+
+    component FloatingButton: MouseArea {
+        property alias iconName: buttonIcon.source
+
+        width: Kirigami.Units.gridUnit * 2
+        height: Kirigami.Units.gridUnit * 2
+
+        Kirigami.Icon {
+            id: buttonIcon
+            anchors.centerIn: parent
+            width: Kirigami.Units.iconSizes.small
+            height: Kirigami.Units.iconSizes.small
+            isMask: true
+            color: Kirigami.Theme.textColor
+        }
+    }
+
+    // Top right corner: back to full screen, and close.
+    Window {
+        transientParent: null
+        flags: Qt.BypassWindowManagerHint | Qt.FramelessWindowHint
+        color: "transparent"
+        visible: root.floatingWindow !== null
+        width: buttonRow.width
+        height: buttonRow.height
+        x: root.liveFrame.x + root.liveFrame.width - width
+        y: root.liveFrame.y
+
+        Rectangle {
+            anchors.fill: parent
+            radius: Kirigami.Units.cornerRadius
+            color: Kirigami.Theme.backgroundColor
+            opacity: 0.85
+        }
+
+        Row {
+            id: buttonRow
+
+            FloatingButton {
+                iconName: "window-maximize"
+                onClicked: root.floatingWindow.keepAbove = false
+            }
+
+            FloatingButton {
+                iconName: "window-close"
+                onClicked: root.floatingWindow.closeWindow()
             }
         }
     }
