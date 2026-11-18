@@ -19,8 +19,7 @@ Loader {
     // floating in the task switcher. The mark is the window's "keep above" state: it
     // is what such a window needs anyway, and the switcher and this script both see it.
     function makeFloating(window) {
-        window.noBorder = true;
-        if (window.fullScreen) {
+        if (ShellSettings.Settings.convergenceModeEnabled || window.fullScreen) {
             return;
         }
         const desktop = window.desktops[0];
@@ -28,10 +27,7 @@ Loader {
             return;
         }
         const area = KWinComponents.Workspace.clientArea(KWinComponents.Workspace.MaximizeArea, window.output, desktop);
-        const geometry = window.frameGeometry;
-        if (geometry.width < area.width || geometry.height < area.height - 1) {
-            return; // already floating
-        }
+        window.noBorder = false;
         window.setMaximize(false, false);
         window.frameGeometry = Qt.rect(area.x + floatingMargin,
                                        area.y + floatingMargin,
@@ -40,7 +36,13 @@ Loader {
     }
 
     function watchFloating(window) {
-        window.keepAboveChanged.connect(() => root.run(window));
+        window.keepAboveChanged.connect(() => {
+            if (window.keepAbove) {
+                root.makeFloating(window);
+            } else {
+                root.run(window);
+            }
+        });
     }
 
     Component.onCompleted: {
@@ -67,7 +69,9 @@ Loader {
         if (ShellSettings.Settings.convergenceModeEnabled) {
             window.noBorder = false;
         } else if (window.keepAbove) {
-            root.makeFloating(window);
+            // floating: keep the place given by makeFloating(), and a title bar to tell
+            // the window from what is below it
+            window.noBorder = false;
         } else {
             if (!window.fullScreen) {
                 const output = window.output;
