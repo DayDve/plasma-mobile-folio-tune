@@ -106,6 +106,11 @@ Loader {
         onTriggered: root.applyPending()
     }
 
+    // Separate, so that a problem with the screenshot module leaves the windows working.
+    Loader {
+        source: Qt.resolvedUrl("Screenshots.qml")
+    }
+
     component FloatingHandle: Window {
         id: handle
 

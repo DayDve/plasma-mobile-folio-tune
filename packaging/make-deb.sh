@@ -63,6 +63,27 @@ TP=$(find "$BUILD/taskpanel-stage" -name 'org.kde.plasma.mobile.taskpanel.so' | 
 PLUG=/usr/lib/$NAME/plugins
 install -Dm644 "$TP" "$PKG$PLUG/plasma/applets/org.kde.plasma.mobile.taskpanel.so"
 
+# Shell settings page with the screenshot options
+cmake -Wno-dev -S "$ROOT/packaging/kcm" -B "$BUILD/kcm" \
+    -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr >/dev/null
+cmake --build "$BUILD/kcm" -j"$(nproc)"
+DESTDIR=$BUILD/kcm-stage cmake --install "$BUILD/kcm" >/dev/null
+KCM=$(find "$BUILD/kcm-stage" -name 'kcm_mobileshell.so' | head -1)
+[ -n "$KCM" ] || { echo "the shell settings page was not built"; exit 1; }
+install -Dm644 "$KCM" "$PKG$PLUG/plasma/kcms/systemsettings/kcm_mobileshell.so"
+
+# Screenshots: KWin module, settings module, capture tool
+cmake -Wno-dev -S "$ROOT/packaging/screenshot" -B "$BUILD/screenshot" \
+    -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr >/dev/null
+cmake --build "$BUILD/screenshot" -j"$(nproc)"
+DESTDIR=$PKG cmake --install "$BUILD/screenshot" >/dev/null
+for po in "$ROOT"/po/*/plasma_mobile_screenshot.po; do
+    lang=$(basename "$(dirname "$po")")
+    mkdir -p "$PKG/usr/share/locale/$lang/LC_MESSAGES"
+    msgfmt -o "$PKG/usr/share/locale/$lang/LC_MESSAGES/plasma_mobile_screenshot.mo" "$po"
+done
+find "$PKG" -name 'libscreenshotplugin.so' | grep -q . || { echo "the screenshot module was not built"; exit 1; }
+
 # KWin script and task switcher effect
 DATA=/usr/share/$NAME
 mkdir -p "$PKG$DATA/kwin/scripts" "$PKG$DATA/kwin/effects"
@@ -83,6 +104,9 @@ find "$PKG" -name '*.cmake' -delete
 find "$PKG" -type d -empty -delete
 mkdir -p "$PKG/DEBIAN"
 
+# The screenshot module uses KWin's internal interfaces: only the version it was built for.
+KWIN=$(dpkg-query -W -f='${Version}' kwin-dev | sed 's/+b[0-9]*$//')
+
 NEXT=$(echo "$UPSTREAM" | awk -F. '{print $1"."$2"."$3+1}')
 SIZE=$(du -sk "$PKG" | cut -f1)
 cat > "$PKG/DEBIAN/control" <<EOF
@@ -91,7 +115,7 @@ Version: $VERSION
 Architecture: $ARCH
 Maintainer: DayDve <daydve@smbit.pro>
 Installed-Size: $SIZE
-Depends: plasma-mobile (>= $UPSTREAM), plasma-mobile (<< $NEXT~)
+Depends: plasma-mobile (>= $UPSTREAM), plasma-mobile (<< $NEXT~), kwin-wayland (>= $KWIN), kwin-wayland (<< $KWIN.0~~next), pipewire-bin, sound-theme-freedesktop
 Section: kde
 Priority: optional
 Homepage: https://github.com/DayDve/plasma-mobile-folio-tune

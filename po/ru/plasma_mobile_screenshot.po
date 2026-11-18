@@ -1,0 +1,22 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: plasma-mobile-screenshot\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Screenshots"
+msgstr "Скриншоты"
+
+msgid "Power + Volume Down"
+msgstr "Питание + громкость вниз"
+
+msgid "Press both keys at the same time to take a screenshot."
+msgstr "Одновременное нажатие обеих кнопок делает снимок экрана."
+
+msgid "Three Finger Swipe Down"
+msgstr "Свайп вниз тремя пальцами"
+
+msgid "Swipe down with three fingers to take a screenshot."
+msgstr "Свайп вниз тремя пальцами делает снимок экрана."

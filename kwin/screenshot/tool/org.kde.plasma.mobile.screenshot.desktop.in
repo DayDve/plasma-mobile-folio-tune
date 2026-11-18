@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Plasma Mobile screenshot
+Exec=@KDE_INSTALL_FULL_LIBEXECDIR@/plasma-mobile-screenshot
+NoDisplay=true
+X-KDE-DBUS-Restricted-Interfaces=org.kde.KWin.ScreenShot2

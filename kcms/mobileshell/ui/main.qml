@@ -11,6 +11,7 @@ import org.kde.kirigami as Kirigami
 import org.kde.kcmutils as KCM
 import org.kde.kirigamiaddons.formcard 1.0 as FormCard
 import org.kde.plasma.private.mobileshell.shellsettingsplugin as ShellSettings
+import org.kde.plasma.private.mobileshell.screenshotsettings as Screenshots
 
 KCM.SimpleKCM {
     id: root
@@ -72,6 +73,38 @@ KCM.SimpleKCM {
                 onCheckedChanged: {
                     if (checked != ShellSettings.KWinSettings.doubleTapWakeup) {
                         ShellSettings.KWinSettings.doubleTapWakeup = checked;
+                    }
+                }
+            }
+        }
+
+        FormCard.FormHeader {
+            title: i18nd("plasma_mobile_screenshot", "Screenshots")
+        }
+
+        FormCard.FormCard {
+            FormCard.FormSwitchDelegate {
+                id: screenshotKeys
+                text: i18nd("plasma_mobile_screenshot", "Power + Volume Down")
+                description: i18nd("plasma_mobile_screenshot", "Press both keys at the same time to take a screenshot.")
+                checked: Screenshots.ScreenshotSettings.keysEnabled
+                onCheckedChanged: {
+                    if (checked != Screenshots.ScreenshotSettings.keysEnabled) {
+                        Screenshots.ScreenshotSettings.keysEnabled = checked;
+                    }
+                }
+            }
+
+            FormCard.FormDelegateSeparator { above: screenshotKeys; below: screenshotGesture }
+
+            FormCard.FormSwitchDelegate {
+                id: screenshotGesture
+                text: i18nd("plasma_mobile_screenshot", "Three Finger Swipe Down")
+                description: i18nd("plasma_mobile_screenshot", "Swipe down with three fingers to take a screenshot.")
+                checked: Screenshots.ScreenshotSettings.gestureEnabled
+                onCheckedChanged: {
+                    if (checked != Screenshots.ScreenshotSettings.gestureEnabled) {
+                        Screenshots.ScreenshotSettings.gestureEnabled = checked;
                     }
                 }
             }
