@@ -18,10 +18,15 @@ Loader {
     readonly property int floatingMinWidth: 160
     readonly property int floatingMinHeight: 120
 
+    // KWin reports its own windows, the handles below among them, as normal ones too.
+    function isAppWindow(window) {
+        return window.normalWindow && window.resourceClass !== "";
+    }
+
     // The active floating window: it gets the handles below.
     readonly property var floatingWindow: {
         const window = KWinComponents.Workspace.activeWindow;
-        if (!window || !window.normalWindow || !window.keepAbove || window.fullScreen || window.minimized
+        if (!window || !root.isAppWindow(window) || !window.keepAbove || window.fullScreen || window.minimized
                 || ShellSettings.Settings.convergenceModeEnabled) {
             return null;
         }
@@ -217,7 +222,7 @@ Loader {
     Component.onCompleted: {
         const windows = KWinComponents.Workspace.windows;
         for (let i = 0; i < windows.length; i++) {
-            if (windows[i].normalWindow) {
+            if (root.isAppWindow(windows[i])) {
                 root.watchFloating(windows[i]);
                 root.run(windows[i]);
             }
@@ -231,7 +236,7 @@ Loader {
             return;
         }
 
-        if (!window.normalWindow) {
+        if (!root.isAppWindow(window)) {
             return;
         }
 
@@ -294,7 +299,7 @@ Loader {
             const windows = KWinComponents.Workspace.windows;
 
             for (let i = 0; i < windows.length; i++) {
-                if (windows[i].normalWindow) {
+                if (root.isAppWindow(windows[i])) {
                     root.run(windows[i]);
                 }
             }
@@ -305,7 +310,7 @@ Loader {
         target: KWinComponents.Workspace
 
         function onWindowAdded(window) {
-            if (window.normalWindow) {
+            if (root.isAppWindow(window)) {
                 root.watchFloating(window);
                 window.interactiveMoveResizeFinished.connect((window) => {
                     root.run(window);
@@ -315,7 +320,7 @@ Loader {
         }
 
         function onWindowActivated(window) {
-            if (window.normalWindow) {
+            if (root.isAppWindow(window)) {
                 currentWindow = window;
                 window.interactiveMoveResizeFinished.connect((window) => {
                     root.run(window);
@@ -331,7 +336,7 @@ Loader {
             const windows = KWinComponents.Workspace.windows;
 
             for (var i = 0; i < windows.length; i++) {
-                if (windows[i].normalWindow) {
+                if (root.isAppWindow(windows[i])) {
                     root.run(windows[i]);
                     // the old place may be off the new screen
                     if (windows[i].keepAbove) {
