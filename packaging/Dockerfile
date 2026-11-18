@@ -9,5 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       libkf6itemmodels-dev libkf6package-dev libkf6config-dev \
       qt6-sensors-dev libkscreen-dev libkf6kcmutils-dev \
       kwin-dev libdrm-dev libvulkan-dev libwayland-dev libxkbcommon-dev libgbm-dev pkgconf \
+      libxcb1-dev libxcb-composite0-dev libxcb-randr0-dev libxcb-res0-dev libxcb-shm0-dev libxcb-sync-dev \
+      libplasmaactivities-dev \
     && rm -rf /var/lib/apt/lists/*
 ENV LANG=C.UTF-8
