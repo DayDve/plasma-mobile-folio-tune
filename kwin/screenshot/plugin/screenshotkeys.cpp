@@ -98,9 +98,15 @@ bool ScreenshotKeys::keyboardKey(KWin::KeyboardKeyEvent *event)
         if (m_consumed.remove(event->nativeScanCode)) {
             return true;
         }
-        // a quick tap: the press goes first, then this release continues on its way
+        // A quick tap: replay the press and then the release. Passing this release on after
+        // the replayed press would not do: KWin's key repeat saw this release before the
+        // filters, and would then repeat the replayed press for ever.
         if (m_holding && m_heldScanCode == event->nativeScanCode) {
             replayHeldKey();
+            m_replaying = true;
+            KWin::input()->keyboard()->processKey(event->nativeScanCode, KWin::KeyboardKeyState::Released, event->timestamp, event->device);
+            m_replaying = false;
+            return true;
         }
         return false;
     }
